@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Match Ledger — Supabase</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  :root{
+    --turf-1:#0e1a0f;
+    --turf-2:#142a16;
+    --panel:#16241a;
+    --input:#1a2e1c;
+    --line:#d9e4b8;
+    --line-dim:#7c8a63;
+    --chalk:#eef0e2;
+    --gold:#c9a14a;
+    --gold-dim:#8a702f;
+    --ink:#070d08;
+    --red:#9e3b3b;
+    --red-dim:#5e2424;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    background:var(--ink);
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(255,255,255,0.04), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px, transparent 2px, transparent 90px);
+    color:var(--chalk);
+    font-family: 'Courier New', ui-monospace, monospace;
+    min-height:100vh;
+  }
+  .wrap{ max-width:760px; margin:0 auto; padding:20px 14px 70px; }
+
+  h1,h2,h3{ font-family:'Arial Black', Impact, sans-serif; margin:0; }
+  button, input, select{ font-family:inherit; }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:18px; gap:10px;
+  }
+  .brand{ font-size:20px; letter-spacing:.02em; }
+  .brand span{ color:var(--gold); }
+
+  .team-tabs{
+    display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .team-tab{
+    flex-shrink:0; background:var(--input); border:1px solid var(--line-dim);
+    color:var(--line); padding:7px 14px; border-radius:20px; font-size:12.5px;
+    cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:6px;
+  }
+  .team-tab.active{ background:var(--gold); color:var(--ink); border-color:var(--gold); font-weight:700; }
+  .team-tab .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .add-team-btn{
+    flex-shrink:0; background:transparent; border:1px dashed var(--line-dim);
+    color:var(--line-dim); padding:7px 12px; border-radius:20px; font-size:12.5px; cursor:pointer;
+  }
+
+  .summary{
+    border:1px solid var(--line-dim); border-radius:4px; padding:16px;
+    margin-bottom:18px; background:linear-gradient(180deg, rgba(255,255,255,0.03), transparent 40%), var(--turf-1);
+  }
+  .summary .teamname{ font-size:24px; color:var(--chalk); margin-bottom:10px; }
+  .summary .teamname .editbtn{ font-size:11px; color:var(--line-dim); font-family:'Courier New',monospace; margin-left:8px; cursor:pointer; text-decoration:underline; }
+  .ledger{ display:flex; flex-wrap:wrap; gap:8px 20px; font-size:13px; color:var(--line); }
+  .ledger b{ color:var(--gold); font-weight:700; }
+
+  .section{
+    border:1px solid var(--line-dim); border-radius:4px; margin-bottom:16px; overflow:hidden;
+    background:var(--panel);
+  }
+  .section-head{
+    padding:12px 14px; border-bottom:1px solid var(--line-dim);
+    display:flex; align-items:center; justify-content:space-between; cursor:pointer;
+  }
+  .section-head h2{ font-size:14px; color:var(--line); letter-spacing:.05em; text-transform:uppercase; }
+  .section-head .chev{ color:var(--line-dim); font-size:12px; }
+  .section-body{ padding:14px; }
+  .section-body.collapsed{ display:none; }
+
+  .row{ display:flex; gap:8px; margin-bottom:10px; }
+  .row > *{ flex:1; }
+  label{ font-size:11px; color:var(--line-dim); display:block; margin-bottom:4px; letter-spacing:.04em; }
+  input, select{
+    width:100%; background:var(--input); border:1px solid var(--line-dim);
+    color:var(--chalk); padding:9px 10px; border-radius:3px; font-size:14px;
+  }
+  input:focus, select:focus{ outline:none; border-color:var(--gold); }
+  input::placeholder{ color:#4a5a40; }
+
+  .vs-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .vs-row .vs{ color:var(--line-dim); font-size:12px; padding-top:18px; }
+
+  .score-row{ display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:14px; }
+  .score-box{
+    width:64px; text-align:center; font-size:28px; font-weight:800;
+    background:var(--ink); border:1px solid var(--gold-dim); border-radius:4px;
+    color:var(--gold); padding:8px 0; font-family:'Arial Black',sans-serif;
+  }
+  .score-colon{ font-size:22px; color:var(--line-dim); }
+
+  .result-pill-row{ display:flex; gap:8px; margin-bottom:14px; }
+  .result-pill{
+    flex:1; text-align:center; padding:9px 0; border-radius:4px; font-size:13px;
+    border:1px solid var(--line-dim); color:var(--line-dim); cursor:pointer; font-weight:700;
+  }
+  .result-pill.active.win{ background:var(--gold); color:var(--ink); border-color:var(--gold); }
+  .result-pill.active.draw{ background:var(--line-dim); color:var(--ink); border-color:var(--line-dim); }
+  .result-pill.active.loss{ background:var(--red); color:var(--chalk); border-color:var(--red); }
+
+  .event-block{ border-top:1px dashed var(--line-dim); padding-top:12px; margin-top:4px; }
+  .event-block h3{ font-size:12px; color:var(--line-dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+  .event-row{
+    display:flex; gap:6px; align-items:flex-end; margin-bottom:8px; flex-wrap:wrap;
+  }
+  .event-row select, .event-row input{ font-size:13px; }
+  .ev-player{ flex:1.6; min-width:110px; }
+  .ev-min{ flex:0.7; min-width:60px; }
+  .ev-type{ flex:1.1; min-width:90px; }
+  .ev-assist{ flex:1.4; min-width:110px; }
+  .ev-remove{
+    background:transparent; border:none; color:var(--red); font-size:18px; cursor:pointer;
+    padding:0 6px; line-height:1; align-self:center;
+  }
+  .add-event-btn{
+    width:100%; background:transparent; border:1px dashed var(--line-dim); color:var(--line);
+    padding:9px 0; border-radius:4px; cursor:pointer; font-size:13px; margin-top:4px;
+  }
+  .add-event-btn:hover{ border-color:var(--gold); color:var(--gold); }
+
+  .save-btn{
+    width:100%; background:var(--gold); color:var(--ink); border:none;
+    padding:13px 0; border-radius:4px; font-size:14px; font-weight:800; cursor:pointer;
+    margin-top:14px; letter-spacing:.03em;
+  }
+  .save-btn:active{ transform:scale(0.99); }
+  .save-btn:disabled{ background:var(--line-dim); cursor:not-allowed; opacity:.6; }
+
+  .roster-add{ display:flex; gap:8px; margin-bottom:12px; }
+  .roster-add input{ flex:1; }
+  .roster-add button{
+    background:var(--gold); color:var(--ink); border:none; padding:9px 16px;
+    border-radius:3px; font-weight:700; cursor:pointer; font-size:13px;
+  }
+  .roster-list{ display:flex; flex-wrap:wrap; gap:6px; }
+  .roster-chip{
+    background:var(--input); border:1px solid var(--line-dim); color:var(--line);
+    padding:6px 10px; border-radius:20px; font-size:12.5px; display:flex; align-items:center; gap:6px;
+  }
+  .roster-chip button{
+    background:transparent; border:none; color:var(--red); cursor:pointer; font-size:14px; line-height:1; padding:0;
+  }
+  .empty-roster{ color:var(--line-dim); font-size:13px; }
+
+  .lineup-list{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px; }
+  .lineup-chip{
+    background:var(--input); border:1px solid var(--line-dim); color:var(--line-dim);
+    padding:6px 12px; border-radius:20px; font-size:12.5px; cursor:pointer;
+  }
+  .lineup-chip.selected{ background:var(--gold); color:var(--ink); border-color:var(--gold); font-weight:700; }
+  .lineup-chip.lineup-all{ border-style:dashed; }
+  .lineup-hint{ font-size:10.5px; color:var(--line-dim); margin-bottom:4px; }
+
+  .stat-table{ width:100%; border-collapse:collapse; font-size:12px; }
+  .stat-table th{
+    text-align:left; color:var(--line-dim); font-weight:700; padding:6px 6px;
+    border-bottom:1px solid var(--line-dim); font-size:10.5px; letter-spacing:.04em;
+    cursor:pointer; white-space:nowrap;
+  }
+  .stat-table th.sorted{ color:var(--gold); }
+  .stat-table td{ padding:7px 6px; border-bottom:1px solid rgba(124,138,99,0.25); color:var(--chalk); white-space:nowrap; }
+  .stat-table td.name{ color:var(--gold); font-weight:700; }
+  .stat-table tr:hover td{ background:rgba(255,255,255,0.02); }
+  .table-scroll{ overflow-x:auto; }
+
+  .match-item{
+    border-bottom:1px solid rgba(124,138,99,0.25); padding:10px 0; font-size:13px;
+  }
+  .match-item:last-child{ border-bottom:none; }
+  .match-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .match-teams{ color:var(--chalk); font-weight:700; }
+  .match-score{ color:var(--gold); font-weight:800; font-size:15px; white-space:nowrap; }
+  .match-meta{ color:var(--line-dim); font-size:11px; margin-top:2px; display:flex; gap:10px; flex-wrap:wrap; }
+  .match-events{ margin-top:6px; font-size:11.5px; color:var(--line); }
+  .match-events div{ margin-bottom:2px; }
+  .match-delete{
+    background:transparent; border:1px solid var(--red-dim); color:var(--red);
+    font-size:10.5px; padding:3px 8px; border-radius:3px; cursor:pointer; margin-top:6px;
+  }
+  .empty-state{ color:var(--line-dim); font-size:13px; padding:20px 0; text-align:center; }
+
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:var(--gold); color:var(--ink); padding:10px 18px; border-radius:4px;
+    font-size:13px; font-weight:700; z-index:50; opacity:0; transition:opacity .25s;
+    pointer-events:none;
+  }
+  .toast.show{ opacity:1; }
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none;
+    align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-box{
+    background:var(--panel); border:1px solid var(--line-dim); border-radius:6px;
+    padding:18px; width:100%; max-width:340px;
+  }
+  .modal-box h3{ font-size:14px; color:var(--chalk); margin-bottom:12px; }
+  .modal-actions{ display:flex; gap:8px; margin-top:14px; }
+  .modal-actions button{ flex:1; padding:9px 0; border-radius:3px; font-size:13px; cursor:pointer; border:1px solid var(--line-dim); background:transparent; color:var(--line); }
+  .modal-actions button.primary{ background:var(--gold); color:var(--ink); border-color:var(--gold); font-weight:700; }
+
+  .color-swatches{ display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .color-swatch{ width:26px; height:26px; border-radius:50%; cursor:pointer; border:2px solid transparent; }
+  .color-swatch.selected{ border-color:var(--chalk); }
+
+  .pitch-wrap{
+    position:relative;
+    width:100%;
+    max-width:420px;
+    margin:0 auto;
+    aspect-ratio: 0.74;
+    border-radius:6px;
+    overflow:hidden;
+    border:1px solid var(--line-dim);
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 40px, transparent 40px, transparent 80px),
+      linear-gradient(180deg, var(--turf-2), var(--turf-1));
+  }
+  .pitch-lines{ position:absolute; inset:0; pointer-events:none; }
+  .pitch-lines svg{ width:100%; height:100%; }
+
+  .pitch-slot{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    cursor:pointer;
+    width:72px;
+  }
+  .pitch-slot .slot-pos-label{
+    font-size:9.5px;
+    color:var(--line-dim);
+    letter-spacing:.06em;
+    margin-bottom:3px;
+    background:rgba(7,13,8,0.6);
+    padding:1px 5px;
+    border-radius:2px;
+  }
+  .pitch-slot .slot-avatar{
+    width:46px; height:46px;
+    border-radius:50%;
+    background:var(--input);
+    border:2px solid var(--gold-dim);
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; color:var(--line-dim);
+    transition:border-color .15s, transform .15s;
+  }
+  .pitch-slot.filled .slot-avatar{
+    background:var(--gold); border-color:var(--gold); color:var(--ink);
+    font-weight:800; font-size:15px;
+  }
+  .pitch-slot:hover .slot-avatar{ transform:scale(1.06); border-color:var(--gold); }
+  .pitch-slot .slot-name{
+    margin-top:4px;
+    font-size:11px;
+    color:var(--chalk);
+    background:rgba(7,13,8,0.7);
+    padding:1px 6px;
+    border-radius:2px;
+    white-space:nowrap;
+    max-width:80px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .pitch-slot.empty .slot-name{ color:var(--line-dim); }
+
+  .bench-block{ margin-top:16px; }
+  .bench-block h3{
+    font-size:12px; color:var(--line-dim); text-transform:uppercase; letter-spacing:.06em;
+    margin-bottom:8px; font-family:'Arial Black', Impact, sans-serif;
+  }
+  .bench-list{ display:flex; flex-wrap:wrap; gap:6px; }
+  .bench-chip{
+    background:var(--input); border:1px solid var(--line-dim); color:var(--line);
+    padding:6px 12px; border-radius:20px; font-size:12.5px;
+  }
+  .bench-chip.unassigned{ border-color:var(--red-dim); color:var(--red); }
+  .formation-hint{ font-size:10.5px; color:var(--line-dim); margin-top:10px; text-align:center; }
+  .formation-empty{ color:var(--line-dim); font-size:13px; text-align:center; padding:16px 0; }
+
+  .picker-list{ display:flex; flex-direction:column; gap:6px; margin-top:10px; max-height:300px; overflow-y:auto; }
+  .picker-option{
+    background:var(--input); border:1px solid var(--line-dim); color:var(--chalk);
+    padding:10px 12px; border-radius:4px; font-size:13.5px; cursor:pointer;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .picker-option:hover{ border-color:var(--gold); }
+  .picker-option .tag{ font-size:10px; color:var(--line-dim); }
+  .picker-clear{
+    margin-top:10px; width:100%; background:transparent; border:1px solid var(--red-dim);
+    color:var(--red); padding:8px 0; border-radius:4px; font-size:12.5px; cursor:pointer;
+  }
+
+  footer{ text-align:center; margin-top:30px; font-size:10.5px; color:var(--line-dim); letter-spacing:.08em; }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">MATCH <span>LEDGER</span></div>
+  </div>
+
+  <div class="team-tabs" id="teamTabs"></div>
+
+  <div class="summary" id="summaryBlock"></div>
+
+  <div class="section">
+    <div class="section-head" data-target="formBody">
+      <h2>เพิ่มแมตช์ใหม่</h2>
+      <span class="chev">▾</span>
+    </div>
+    <div class="section-body" id="formBody"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head" data-target="rosterBody">
+      <h2>รายชื่อผู้เล่นในทีม</h2>
+      <span class="chev">▾</span>
+    </div>
+    <div class="section-body" id="rosterBody"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head" data-target="formationBody">
+      <h2>จัด Formation (1-2-1-2)</h2>
+      <span class="chev">▾</span>
+    </div>
+    <div class="section-body" id="formationBody"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head" data-target="statsBody">
+      <h2>ตารางสถิติสะสม (อัตโนมัติ)</h2>
+      <span class="chev">▾</span>
+    </div>
+    <div class="section-body" id="statsBody"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head" data-target="historyBody">
+      <h2>ประวัติแมตช์</h2>
+      <span class="chev">▾</span>
+    </div>
+    <div class="section-body collapsed" id="historyBody"></div>
+  </div>
+
+  <footer>MATCH LEDGER · DATA SYNCED WITH SUPABASE</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="newTeamModal">
+  <div class="modal-box">
+    <h3>สร้างทีมใหม่</h3>
+    <label>ชื่อทีม</label>
+    <input type="text" id="newTeamName" placeholder="เช่น ขาว 12Bp">
+    <label style="margin-top:10px;">เลือกสีทีม</label>
+    <div class="color-swatches" id="colorSwatches"></div>
+    <div class="modal-actions">
+      <button id="cancelNewTeam">ยกเลิก</button>
+      <button class="primary" id="confirmNewTeam">สร้างทีม</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="positionPickerModal">
+  <div class="modal-box">
+    <h3 id="pickerTitle">เลือกผู้เล่น</h3>
+    <div class="picker-list" id="pickerList"></div>
+    <button class="picker-clear" id="pickerClearBtn">ว่างตำแหน่งนี้</button>
+    <div class="modal-actions">
+      <button id="cancelPicker">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  ================================
+  1) ใส่ Supabase URL และ anon key ตรงนี้
+  ================================
+*/
+const SUPABASE_URL = 'https://atzazaxtxhzrvqxlhhqj.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_jmf71edz6dGKqsEfNJMWvA_O_x6xtkY';
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const ACTIVE_TEAM_KEY = 'match_ledger_active_team_id_v1';
+
+const TEAM_COLORS = ['#c9a14a','#9e3b3b','#3a6ea5','#4a7a4a','#7a4a8a','#888888','#1a1a1a','#d9d9d9'];
+
+let state = {
+  teams: [],
+  matches: [],
+  activeTeamId: localStorage.getItem(ACTIVE_TEAM_KEY) || null
+};
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function uid(prefix){
+  return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+}
+
+function getActiveTeam(){
+  return state.teams.find(t=>t.id === state.activeTeamId);
+}
+
+function saveActiveTeamId(){
+  if(state.activeTeamId){
+    localStorage.setItem(ACTIVE_TEAM_KEY, state.activeTeamId);
+  }
+}
+
+async function loadState(){
+  try{
+    const { data: teams, error: teamError } = await supabaseClient
+      .from('teams')
+      .select('*')
+      .order('created_at', { ascending:true });
+
+    if(teamError) throw teamError;
+
+    const { data: matches, error: matchError } = await supabaseClient
+      .from('matches')
+      .select('*')
+      .order('created_at', { ascending:false });
+
+    if(matchError) throw matchError;
+
+    state.teams = (teams || []).map(t => ({
+      id: t.id,
+      name: t.name,
+      color: t.color,
+      roster: Array.isArray(t.roster) ? t.roster : [],
+      formation: t.formation || {}
+    }));
+
+    state.matches = (matches || []).map(m => ({
+      id: m.id,
+      teamId: m.team_id,
+      homeTeam: m.home_team,
+      awayTeam: m.away_team,
+      homeScore: Number(m.home_score || 0),
+      awayScore: Number(m.away_score || 0),
+      date: m.match_date,
+      league: m.league || '',
+      result: m.result,
+      lineup: Array.isArray(m.lineup) ? m.lineup : [],
+      events: Array.isArray(m.events) ? m.events : []
+    }));
+
+    if(state.teams.length === 0){
+      await seedDefaultTeams();
+      return await loadState();
+    }
+
+    const stillHasActiveTeam = state.teams.some(t => t.id === state.activeTeamId);
+    if(!state.activeTeamId || !stillHasActiveTeam){
+      state.activeTeamId = state.teams[0].id;
+      saveActiveTeamId();
+    }
+
+  }catch(e){
+    console.error('load failed', e);
+    showToast('โหลดข้อมูลไม่สำเร็จ เช็ก Supabase URL / KEY / ตาราง');
+  }
+}
+
+async function seedDefaultTeams(){
+  const defaultTeams = [
+    {
+      id:'team_black',
+      name:'Black Ballonkador',
+      color:'#1a1a1a',
+      roster:['Pop','Five','Bam','Moth','Pum','Sharp','Mac','Net','Aunza','Golf'],
+      formation:{}
+    },
+    {
+      id:'team_white',
+      name:'White PratanPorn',
+      color:'#e8e8e0',
+      roster:['A','B','C','D','E','F','G'],
+      formation:{}
+    },
+    {
+      id:'team_pink',
+      name:'Pink Basgangster',
+      color:'#d4769a',
+      roster:['A','B','C','D','E','F','G'],
+      formation:{}
+    },
+    {
+      id:'team_red',
+      name:'Red Ceasasalad',
+      color:'#9e3b3b',
+      roster:['A','B','C','D','E','F','G'],
+      formation:{}
+    }
+  ];
+
+  const { error } = await supabaseClient
+    .from('teams')
+    .insert(defaultTeams);
+
+  if(error) throw error;
+
+  state.activeTeamId = 'team_black';
+  saveActiveTeamId();
+}
+
+async function updateTeam(teamId, patch){
+  const { error } = await supabaseClient
+    .from('teams')
+    .update(patch)
+    .eq('id', teamId);
+
+  if(error){
+    console.error(error);
+    showToast('อัปเดตทีมไม่สำเร็จ');
+    return false;
+  }
+
+  await loadState();
+  return true;
+}
+
+/* ========== TEAM TABS ========== */
+function renderTeamTabs(){
+  const wrap = document.getElementById('teamTabs');
+
+  wrap.innerHTML = state.teams.map(t=>`
+    <div class="team-tab ${t.id===state.activeTeamId?'active':''}" data-team="${t.id}">
+      <span class="dot" style="background:${t.color}"></span>${t.name}
+    </div>
+  `).join('') + `<div class="add-team-btn" id="addTeamBtn">+ ทีมใหม่</div>`;
+
+  wrap.querySelectorAll('.team-tab').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      state.activeTeamId = el.dataset.team;
+      saveActiveTeamId();
+      formLineup = [];
+      formEvents = [];
+      formResult = 'win';
+      renderAll();
+    });
+  });
+
+  document.getElementById('addTeamBtn').addEventListener('click', openNewTeamModal);
+}
+
+/* ========== NEW TEAM MODAL ========== */
+let selectedColor = TEAM_COLORS[0];
+
+function openNewTeamModal(){
+  selectedColor = TEAM_COLORS[0];
+  document.getElementById('newTeamName').value = '';
+  renderColorSwatches();
+  document.getElementById('newTeamModal').classList.add('show');
+}
+
+function renderColorSwatches(){
+  const wrap = document.getElementById('colorSwatches');
+  wrap.innerHTML = TEAM_COLORS.map(c=>`
+    <div class="color-swatch ${c===selectedColor?'selected':''}" style="background:${c}" data-color="${c}"></div>
+  `).join('');
+
+  wrap.querySelectorAll('.color-swatch').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      selectedColor = el.dataset.color;
+      renderColorSwatches();
+    });
+  });
+}
+
+document.getElementById('cancelNewTeam').addEventListener('click', ()=>{
+  document.getElementById('newTeamModal').classList.remove('show');
+});
+
+document.getElementById('confirmNewTeam').addEventListener('click', async ()=>{
+  const name = document.getElementById('newTeamName').value.trim();
+  if(!name){
+    showToast('กรอกชื่อทีมก่อนนะครับ');
+    return;
+  }
+
+  const newTeam = {
+    id: uid('team'),
+    name,
+    color: selectedColor,
+    roster: [],
+    formation: {}
+  };
+
+  const { error } = await supabaseClient
+    .from('teams')
+    .insert(newTeam);
+
+  if(error){
+    console.error(error);
+    showToast('สร้างทีมไม่สำเร็จ');
+    return;
+  }
+
+  state.activeTeamId = newTeam.id;
+  saveActiveTeamId();
+
+  document.getElementById('newTeamModal').classList.remove('show');
+  await loadState();
+  renderAll();
+  showToast('สร้างทีม ' + name + ' แล้ว');
+});
+
+/* ========== SUMMARY ========== */
+function computeTeamSummary(team){
+  const matches = state.matches.filter(m=>m.teamId===team.id);
+  let w=0,d=0,l=0,gf=0,ga=0,cs=0;
+
+  matches.forEach(m=>{
+    if(m.result==='win') w++;
+    else if(m.result==='draw') d++;
+    else l++;
+
+    gf += m.homeScore;
+    ga += m.awayScore;
+
+    if(m.awayScore===0) cs++;
+  });
+
+  const ap = matches.length;
+  const wpct = ap ? (w/ap*100) : 0;
+  return {ap,w,d,l,gf,ga,cs,wpct};
+}
+
+function renderSummary(){
+  const team = getActiveTeam();
+  const el = document.getElementById('summaryBlock');
+
+  if(!team){
+    el.innerHTML = '<div class="empty-state">ยังไม่มีทีม กดสร้างทีมใหม่ด้านบนได้เลย</div>';
+    return;
+  }
+
+  const s = computeTeamSummary(team);
+  el.innerHTML = `
+    <div class="teamname">${team.name} <span class="editbtn" id="renameTeamBtn">เปลี่ยนชื่อ</span></div>
+    <div class="ledger">
+      <span>W-D-L <b>${s.w}-${s.d}-${s.l}</b></span>
+      <span>WIN% <b>${s.wpct.toFixed(1)}%</b></span>
+      <span>GF-GA <b>${s.gf}-${s.ga}</b></span>
+      <span>CS <b>${s.cs}</b></span>
+      <span>นัดทั้งหมด <b>${s.ap}</b></span>
+    </div>
+  `;
+
+  document.getElementById('renameTeamBtn').addEventListener('click', async ()=>{
+    const newName = prompt('ชื่อทีมใหม่', team.name);
+    if(newName && newName.trim()){
+      const ok = await updateTeam(team.id, { name: newName.trim() });
+      if(ok) renderAll();
+    }
+  });
+}
+
+/* ========== FORM ========== */
+let formEvents = [];
+let formLineup = [];
+let formResult = 'win';
+
+function renderForm(){
+  const team = getActiveTeam();
+  const body = document.getElementById('formBody');
+
+  if(!team){
+    body.innerHTML = '<div class="empty-state">สร้างทีมก่อนเพื่อเริ่มบันทึกแมตช์</div>';
+    return;
+  }
+
+  if(formLineup.length === 0 && team.roster.length > 0){
+    formLineup = [...team.roster];
+  }
+
+  body.innerHTML = `
+    <div class="vs-row">
+      <div>
+        <label>ทีมเจ้าบ้าน</label>
+        <input type="text" id="homeTeamInput" value="${team.name}">
+      </div>
+      <div class="vs">VS</div>
+      <div>
+        <label>ทีมเยือน</label>
+        <input type="text" id="awayTeamInput" placeholder="ทีมเยือน">
+      </div>
+    </div>
+
+    <div class="score-row">
+      <div>
+        <label style="text-align:center">เจ้าบ้าน</label>
+        <input type="number" min="0" class="score-box" id="homeScoreInput" value="0">
+      </div>
+      <div class="score-colon">:</div>
+      <div>
+        <label style="text-align:center">เยือน</label>
+        <input type="number" min="0" class="score-box" id="awayScoreInput" value="0">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>วันที่</label>
+        <input type="date" id="matchDateInput">
+      </div>
+      <div>
+        <label>ลีก / รายการ</label>
+        <input type="text" id="leagueInput" placeholder="เช่น แข่งเตะเช้าวันเสาร์" value="Cruizero League">
+      </div>
+    </div>
+
+    <label>ผลการแข่งขัน (ของทีมนี้)</label>
+    <div class="result-pill-row" id="resultPillRow">
+      <div class="result-pill win ${formResult==='win'?'active':''}" data-result="win">✅ ชนะ</div>
+      <div class="result-pill draw ${formResult==='draw'?'active':''}" data-result="draw">➖ เสมอ</div>
+      <div class="result-pill loss ${formResult==='loss'?'active':''}" data-result="loss">❌ แพ้</div>
+    </div>
+
+    <div class="event-block">
+      <h3>ผู้ลงเล่นแมตช์นี้</h3>
+      <div class="lineup-list" id="lineupList"></div>
+      <div class="lineup-hint">เลือกทุกคนที่ลงเล่น ใช้คำนวณ AP / W-D-L / Clean Sheet ให้แต่ละคน</div>
+    </div>
+
+    <div class="event-block">
+      <h3>บันทึกเหตุการณ์ผู้เล่น</h3>
+      <div id="eventRows"></div>
+      <button class="add-event-btn" id="addEventBtn">+ เพิ่มเหตุการณ์</button>
+    </div>
+
+    <button class="save-btn" id="saveMatchBtn">+ บันทึกแมตช์</button>
+  `;
+
+  const dateInput = document.getElementById('matchDateInput');
+  dateInput.value = new Date().toISOString().slice(0,10);
+
+  document.querySelectorAll('.result-pill').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      formResult = el.dataset.result;
+      renderForm();
+      renderEventRows();
+    });
+  });
+
+  document.getElementById('addEventBtn').addEventListener('click', ()=>{
+    formEvents.push({
+      player: team.roster[0] || '',
+      minute:'',
+      type:'goal',
+      assistPlayer:''
+    });
+    renderEventRows();
+  });
+
+  document.getElementById('saveMatchBtn').addEventListener('click', saveMatch);
+
+  renderLineupList();
+  renderEventRows();
+}
+
+function renderLineupList(){
+  const team = getActiveTeam();
+  const wrap = document.getElementById('lineupList');
+  if(!wrap) return;
+
+  if(team.roster.length === 0){
+    wrap.innerHTML = '<div class="empty-roster">เพิ่มผู้เล่นในทีมก่อน เพื่อเลือกผู้ลงเล่น</div>';
+    return;
+  }
+
+  wrap.innerHTML = team.roster.map(p=>`
+    <div class="lineup-chip ${formLineup.includes(p)?'selected':''}" data-player="${p}">${p}</div>
+  `).join('') + `<div class="lineup-chip lineup-all" id="lineupSelectAll">เลือกทั้งหมด</div>`;
+
+  wrap.querySelectorAll('.lineup-chip[data-player]').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      const p = chip.dataset.player;
+      if(formLineup.includes(p)){
+        formLineup = formLineup.filter(x=>x!==p);
+      }else{
+        formLineup.push(p);
+      }
+      renderLineupList();
+      renderEventRows();
+    });
+  });
+
+  const allBtn = document.getElementById('lineupSelectAll');
+  if(allBtn){
+    allBtn.addEventListener('click', ()=>{
+      if(formLineup.length === team.roster.length){
+        formLineup = [];
+      }else{
+        formLineup = [...team.roster];
+      }
+      renderLineupList();
+      renderEventRows();
+    });
+  }
+}
+
+function renderEventRows(){
+  const team = getActiveTeam();
+  const wrap = document.getElementById('eventRows');
+  if(!wrap) return;
+
+  const eligiblePlayers = formLineup.length ? formLineup : team.roster;
+  const playerOptions = eligiblePlayers.map(p=>`<option value="${p}">${p}</option>`).join('');
+  const assistOptions = () => {
+    return ['<option value="">— ไม่ระบุ —</option>']
+      .concat(eligiblePlayers.map(p=>`<option value="${p}">${p}</option>`))
+      .join('');
+  };
+
+  wrap.innerHTML = formEvents.map((ev, idx)=>`
+    <div class="event-row" data-idx="${idx}">
+      <div class="ev-player">
+        <label>ชื่อผู้เล่น</label>
+        <select class="ev-player-select">
+          ${playerOptions || '<option value="">— ไม่มีผู้เล่น —</option>'}
+        </select>
+      </div>
+
+      <div class="ev-min">
+        <label>นาที</label>
+        <input type="number" min="0" max="130" class="ev-minute-input" value="${ev.minute}" placeholder="นาที">
+      </div>
+
+      <div class="ev-type">
+        <label>เหตุการณ์</label>
+        <select class="ev-type-select">
+          <option value="goal" ${ev.type==='goal'?'selected':''}>⚽ ยิงประตู</option>
+          <option value="yellow" ${ev.type==='yellow'?'selected':''}>🟨 ใบเหลือง</option>
+          <option value="red" ${ev.type==='red'?'selected':''}>🟥 ใบแดง</option>
+        </select>
+      </div>
+
+      ${ev.type==='goal' ? `
+      <div class="ev-assist">
+        <label>ผู้แอสซิสต์</label>
+        <select class="ev-assist-select">${assistOptions()}</select>
+      </div>` : '<div class="ev-assist"></div>'}
+
+      <button class="ev-remove" data-remove="${idx}">×</button>
+    </div>
+  `).join('');
+
+  wrap.querySelectorAll('.event-row').forEach(row=>{
+    const idx = parseInt(row.dataset.idx, 10);
+    const ev = formEvents[idx];
+
+    const playerSelect = row.querySelector('.ev-player-select');
+    if(playerSelect){
+      playerSelect.value = ev.player || eligiblePlayers[0] || '';
+      if(!ev.player && playerSelect.value) ev.player = playerSelect.value;
+      playerSelect.addEventListener('change', e=>{
+        formEvents[idx].player = e.target.value;
+      });
+    }
+
+    row.querySelector('.ev-minute-input').addEventListener('input', e=>{
+      formEvents[idx].minute = e.target.value;
+    });
+
+    row.querySelector('.ev-type-select').addEventListener('change', e=>{
+      formEvents[idx].type = e.target.value;
+      if(e.target.value !== 'goal') formEvents[idx].assistPlayer = '';
+      renderEventRows();
+    });
+
+    const assistSel = row.querySelector('.ev-assist-select');
+    if(assistSel){
+      assistSel.value = ev.assistPlayer || '';
+      assistSel.addEventListener('change', e=>{
+        formEvents[idx].assistPlayer = e.target.value;
+      });
+    }
+  });
+
+  wrap.querySelectorAll('[data-remove]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      formEvents.splice(parseInt(btn.dataset.remove, 10), 1);
+      renderEventRows();
+    });
+  });
+}
+
+async function saveMatch(){
+  const team = getActiveTeam();
+  if(!team) return;
+
+  if(formLineup.length === 0){
+    showToast('เลือกผู้ลงเล่นอย่างน้อย 1 คนก่อนบันทึก');
+    return;
+  }
+
+  const saveBtn = document.getElementById('saveMatchBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'กำลังบันทึก...';
+
+  const lineupSet = new Set(formLineup);
+  formEvents.forEach(ev=>{
+    if(ev.player) lineupSet.add(ev.player);
+    if(ev.assistPlayer) lineupSet.add(ev.assistPlayer);
+  });
+
+  const homeTeam = document.getElementById('homeTeamInput').value.trim() || team.name;
+  const awayTeam = document.getElementById('awayTeamInput').value.trim() || 'ทีมเยือน';
+  const homeScore = parseInt(document.getElementById('homeScoreInput').value, 10) || 0;
+  const awayScore = parseInt(document.getElementById('awayScoreInput').value, 10) || 0;
+  const date = document.getElementById('matchDateInput').value || null;
+  const league = document.getElementById('leagueInput').value.trim();
+
+  const match = {
+    id: uid('match'),
+    team_id: team.id,
+    home_team: homeTeam,
+    away_team: awayTeam,
+    home_score: homeScore,
+    away_score: awayScore,
+    match_date: date,
+    league,
+    result: formResult,
+    lineup: Array.from(lineupSet),
+    events: formEvents.filter(e=>e.player).map(e=>({...e}))
+  };
+
+  const { error } = await supabaseClient
+    .from('matches')
+    .insert(match);
+
+  if(error){
+    console.error(error);
+    showToast('บันทึกแมตช์ไม่สำเร็จ');
+    saveBtn.disabled = false;
+    saveBtn.textContent = '+ บันทึกแมตช์';
+    return;
+  }
+
+  formEvents = [];
+  formLineup = [];
+  formResult = 'win';
+
+  await loadState();
+  renderAll();
+  showToast('บันทึกแมตช์แล้ว ✅');
+}
+
+/* ========== ROSTER ========== */
+function renderRoster(){
+  const team = getActiveTeam();
+  const body = document.getElementById('rosterBody');
+
+  if(!team){
+    body.innerHTML = '<div class="empty-state">สร้างทีมก่อน</div>';
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="roster-add">
+      <input type="text" id="newPlayerInput" placeholder="ชื่อผู้เล่นใหม่">
+      <button id="addPlayerBtn">+ เพิ่ม</button>
+    </div>
+    <div class="roster-list" id="rosterList">
+      ${team.roster.length ? team.roster.map(p=>`
+        <div class="roster-chip">${p} <button data-remove-player="${p}">×</button></div>
+      `).join('') : '<div class="empty-roster">ยังไม่มีผู้เล่นในทีมนี้</div>'}
+    </div>
+  `;
+
+  document.getElementById('addPlayerBtn').addEventListener('click', async ()=>{
+    const input = document.getElementById('newPlayerInput');
+    const name = input.value.trim();
+    if(!name) return;
+
+    if(team.roster.includes(name)){
+      showToast('มีชื่อนี้ในทีมแล้ว');
+      return;
+    }
+
+    const newRoster = [...team.roster, name];
+    const ok = await updateTeam(team.id, { roster: newRoster });
+
+    if(ok){
+      await loadState();
+      renderAll();
+      showToast('เพิ่ม ' + name + ' แล้ว');
+    }
+  });
+
+  body.querySelectorAll('[data-remove-player]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const name = btn.dataset.removePlayer;
+      if(!confirm(`ลบ ${name} ออกจากทีม? (สถิติแมตช์เก่ายังเก็บไว้)`)) return;
+
+      const newRoster = team.roster.filter(p=>p!==name);
+
+      const newFormation = {...(team.formation || {})};
+      Object.keys(newFormation).forEach(slot=>{
+        if(newFormation[slot] === name){
+          delete newFormation[slot];
+        }
+      });
+
+      const ok = await updateTeam(team.id, {
+        roster: newRoster,
+        formation: newFormation
+      });
+
+      if(ok){
+        formLineup = formLineup.filter(p => p !== name);
+        renderAll();
+        showToast('ลบผู้เล่นแล้ว');
+      }
+    });
+  });
+}
+
+/* ========== STATS TABLE ========== */
+let sortKey = 'wpct';
+let sortDir = -1;
+
+function computePlayerStats(team){
+  const matches = state.matches.filter(m=>m.teamId===team.id);
+  const stats = {};
+
+  team.roster.forEach(p=>{
+    stats[p] = {name:p, ap:0, w:0, d:0, l:0, g:0, a:0, cs:0};
+  });
+
+  matches.forEach(m=>{
+    let playersInMatch = (m.lineup && m.lineup.length) ? new Set(m.lineup) : new Set();
+
+    if(playersInMatch.size === 0){
+      m.events.forEach(ev=>{
+        if(ev.player) playersInMatch.add(ev.player);
+        if(ev.assistPlayer) playersInMatch.add(ev.assistPlayer);
+      });
+    }
+
+    playersInMatch.forEach(p=>{
+      if(!stats[p]){
+        stats[p] = {name:p, ap:0, w:0, d:0, l:0, g:0, a:0, cs:0};
+      }
+      stats[p].ap++;
+      if(m.result==='win') stats[p].w++;
+      else if(m.result==='draw') stats[p].d++;
+      else stats[p].l++;
+      if(m.awayScore===0) stats[p].cs++;
+    });
+
+    m.events.forEach(ev=>{
+      if(ev.player && !stats[ev.player]){
+        stats[ev.player] = {name:ev.player, ap:0, w:0, d:0, l:0, g:0, a:0, cs:0};
+      }
+      if(ev.assistPlayer && !stats[ev.assistPlayer]){
+        stats[ev.assistPlayer] = {name:ev.assistPlayer, ap:0, w:0, d:0, l:0, g:0, a:0, cs:0};
+      }
+
+      if(ev.type === 'goal'){
+        if(ev.player) stats[ev.player].g++;
+        if(ev.assistPlayer) stats[ev.assistPlayer].a++;
+      }
+    });
+  });
+
+  return Object.values(stats).map(s=>({
+    ...s,
+    wpct: s.ap ? (s.w/s.ap*100) : 0
+  }));
+}
+
+function renderStats(){
+  const team = getActiveTeam();
+  const body = document.getElementById('statsBody');
+
+  if(!team){
+    body.innerHTML = '<div class="empty-state">สร้างทีมก่อน</div>';
+    return;
+  }
+
+  const rows = computePlayerStats(team);
+
+  if(rows.length === 0){
+    body.innerHTML = '<div class="empty-state">ยังไม่มีข้อมูลผู้เล่น เพิ่มผู้เล่นและบันทึกแมตช์เพื่อให้ระบบคำนวณสถิติให้อัตโนมัติ</div>';
+    return;
+  }
+
+  rows.sort((a,b)=>{
+    if(sortKey === 'name'){
+      return sortDir * String(a.name).localeCompare(String(b.name), 'th');
+    }
+    return sortDir * ((b[sortKey] || 0) - (a[sortKey] || 0));
+  });
+
+  const cols = [
+    {key:'name', label:'ผู้เล่น'},
+    {key:'ap', label:'AP'},
+    {key:'w', label:'W'},
+    {key:'d', label:'D'},
+    {key:'l', label:'L'},
+    {key:'wpct', label:'W%'},
+    {key:'g', label:'G'},
+    {key:'a', label:'A'},
+    {key:'cs', label:'CS'}
+  ];
+
+  body.innerHTML = `
+    <div class="table-scroll">
+      <table class="stat-table">
+        <thead>
+          <tr>
+            ${cols.map(c=>`
+              <th data-sort="${c.key}" class="${sortKey===c.key?'sorted':''}">
+                ${c.label}${sortKey===c.key ? (sortDir===1?' ▲':' ▼') : ''}
+              </th>
+            `).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r=>`
+            <tr>
+              <td class="name">${r.name}</td>
+              <td>${r.ap}</td>
+              <td>${r.w}</td>
+              <td>${r.d}</td>
+              <td>${r.l}</td>
+              <td>${r.wpct.toFixed(1)}%</td>
+              <td>${r.g}</td>
+              <td>${r.a}</td>
+              <td>${r.cs}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  body.querySelectorAll('th[data-sort]').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.sort;
+      if(sortKey === key){
+        sortDir *= -1;
+      }else{
+        sortKey = key;
+        sortDir = -1;
+      }
+      renderStats();
+    });
+  });
+}
+
+/* ========== MATCH HISTORY ========== */
+function renderHistory(){
+  const team = getActiveTeam();
+  const body = document.getElementById('historyBody');
+
+  if(!team){
+    body.innerHTML = '<div class="empty-state">สร้างทีมก่อน</div>';
+    return;
+  }
+
+  const matches = state.matches.filter(m=>m.teamId===team.id);
+
+  if(matches.length === 0){
+    body.innerHTML = '<div class="empty-state">ยังไม่มีแมตช์ที่บันทึกไว้</div>';
+    return;
+  }
+
+  const resultLabel = {win:'✅ ชนะ', draw:'➖ เสมอ', loss:'❌ แพ้'};
+
+  body.innerHTML = matches.map(m=>`
+    <div class="match-item">
+      <div class="match-head">
+        <div class="match-teams">${m.homeTeam} vs ${m.awayTeam}</div>
+        <div class="match-score">${m.homeScore} : ${m.awayScore}</div>
+      </div>
+
+      <div class="match-meta">
+        <span>${m.date || '—'}</span>
+        ${m.league ? `<span>${m.league}</span>` : ''}
+        <span>${resultLabel[m.result]}</span>
+        <span>ลงเล่น ${m.lineup ? m.lineup.length : '—'} คน</span>
+      </div>
+
+      ${m.events.length ? `
+        <div class="match-events">
+          ${m.events.map(ev=>{
+            const icon = ev.type==='goal' ? '⚽' : ev.type==='yellow' ? '🟨' : '🟥';
+            const minute = ev.minute ? `${ev.minute}'` : '';
+            const assist = ev.assistPlayer ? ` (แอสซิสต์: ${ev.assistPlayer})` : '';
+            return `<div>${icon} ${minute} ${ev.player}${assist}</div>`;
+          }).join('')}
+        </div>
+      ` : ''}
+
+      <button class="match-delete" data-delete="${m.id}">ลบแมตช์นี้</button>
+    </div>
+  `).join('');
+
+  body.querySelectorAll('[data-delete]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('ลบแมตช์นี้? สถิติที่เกี่ยวข้องจะถูกคำนวณใหม่ทันที')) return;
+
+      const { error } = await supabaseClient
+        .from('matches')
+        .delete()
+        .eq('id', btn.dataset.delete);
+
+      if(error){
+        console.error(error);
+        showToast('ลบแมตช์ไม่สำเร็จ');
+        return;
+      }
+
+      await loadState();
+      renderAll();
+      showToast('ลบแมตช์แล้ว');
+    });
+  });
+}
+
+/* ========== FORMATION BOARD ========== */
+const FORMATION_SLOTS = [
+  { key:'GK', label:'GK', x:50, y:92 },
+  { key:'LB', label:'LB', x:22, y:74 },
+  { key:'RB', label:'RB', x:78, y:74 },
+  { key:'CM', label:'CM', x:50, y:50 },
+  { key:'LW', label:'LW', x:22, y:20 },
+  { key:'RW', label:'RW', x:78, y:20 }
+];
+
+let activePickerSlot = null;
+
+function ensureFormation(team){
+  if(!team.formation) team.formation = {};
+  return team.formation;
+}
+
+function pitchLinesSVG(){
+  return `
+    <svg viewBox="0 0 100 135" preserveAspectRatio="none">
+      <rect x="2" y="2" width="96" height="131" fill="none" stroke="#7c8a63" stroke-width="0.6" />
+      <line x1="2" y1="67.5" x2="98" y2="67.5" stroke="#7c8a63" stroke-width="0.5" />
+      <circle cx="50" cy="67.5" r="11" fill="none" stroke="#7c8a63" stroke-width="0.5" />
+      <rect x="28" y="2" width="44" height="16" fill="none" stroke="#7c8a63" stroke-width="0.5" />
+      <rect x="28" y="117" width="44" height="16" fill="none" stroke="#7c8a63" stroke-width="0.5" />
+      <path d="M 38 18 A 12 12 0 0 0 62 18" fill="none" stroke="#7c8a63" stroke-width="0.5" />
+      <path d="M 38 117 A 12 12 0 0 1 62 117" fill="none" stroke="#7c8a63" stroke-width="0.5" />
+    </svg>
+  `;
+}
+
+function renderFormation(){
+  const team = getActiveTeam();
+  const body = document.getElementById('formationBody');
+
+  if(!team){
+    body.innerHTML = '<div class="formation-empty">สร้างทีมก่อน</div>';
+    return;
+  }
+
+  if(team.roster.length === 0){
+    body.innerHTML = '<div class="formation-empty">เพิ่มผู้เล่นในทีมก่อน เพื่อจัด formation</div>';
+    return;
+  }
+
+  const formation = ensureFormation(team);
+
+  Object.keys(formation).forEach(slotKey => {
+    if(formation[slotKey] && !team.roster.includes(formation[slotKey])){
+      delete formation[slotKey];
+    }
+  });
+
+  const assignedNames = new Set(Object.values(formation).filter(Boolean));
+  const benchPlayers = team.roster.filter(p => !assignedNames.has(p));
+
+  const slotsHTML = FORMATION_SLOTS.map(slot => {
+    const assigned = formation[slot.key];
+    const filled = !!assigned;
+
+    return `
+      <div class="pitch-slot ${filled?'filled':'empty'}" style="left:${slot.x}%; top:${slot.y}%;" data-slot="${slot.key}">
+        <div class="slot-pos-label">${slot.label}</div>
+        <div class="slot-avatar">${filled ? assigned.slice(0,2).toUpperCase() : '+'}</div>
+        <div class="slot-name">${filled ? assigned : 'ว่าง'}</div>
+      </div>
+    `;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="pitch-wrap">
+      <div class="pitch-lines">${pitchLinesSVG()}</div>
+      ${slotsHTML}
+    </div>
+
+    <div class="formation-hint">แตะตำแหน่งบนสนามเพื่อเลือกหรือเปลี่ยนผู้เล่น</div>
+
+    <div class="bench-block">
+      <h3>ตัวสำรอง (${benchPlayers.length})</h3>
+      <div class="bench-list">
+        ${benchPlayers.length ? benchPlayers.map(p=>`<div class="bench-chip">${p}</div>`).join('') : '<div class="bench-chip unassigned">ไม่มีตัวสำรอง</div>'}
+      </div>
+    </div>
+  `;
+
+  body.querySelectorAll('.pitch-slot').forEach(slotEl => {
+    slotEl.addEventListener('click', () => openPositionPicker(team, slotEl.dataset.slot));
+  });
+}
+
+function openPositionPicker(team, slotKey){
+  activePickerSlot = { teamId: team.id, slotKey };
+
+  const slotMeta = FORMATION_SLOTS.find(s=>s.key===slotKey);
+  document.getElementById('pickerTitle').textContent = `เลือกผู้เล่นตำแหน่ง ${slotMeta.label}`;
+
+  const formation = ensureFormation(team);
+  const currentlyHere = formation[slotKey];
+
+  const list = document.getElementById('pickerList');
+  list.innerHTML = team.roster.map(p => {
+    const isHere = p === currentlyHere;
+    const elsewhereSlot = Object.entries(formation).find(([k,v])=>v===p && k!==slotKey);
+
+    return `
+      <div class="picker-option" data-player="${p}" style="${isHere?'border-color:var(--gold);':''}">
+        <span>${p}</span>
+        <span class="tag">${isHere ? 'อยู่ตำแหน่งนี้' : (elsewhereSlot ? 'อยู่ที่ ' + elsewhereSlot[0] : '')}</span>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('.picker-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      assignPlayerToSlot(opt.dataset.player);
+    });
+  });
+
+  document.getElementById('positionPickerModal').classList.add('show');
+}
+
+async function assignPlayerToSlot(player){
+  if(!activePickerSlot) return;
+
+  const team = state.teams.find(t=>t.id===activePickerSlot.teamId);
+  if(!team) return;
+
+  const formation = {...ensureFormation(team)};
+
+  Object.keys(formation).forEach(k => {
+    if(formation[k] === player){
+      delete formation[k];
+    }
+  });
+
+  formation[activePickerSlot.slotKey] = player;
+
+  const ok = await updateTeam(team.id, { formation });
+
+  if(ok){
+    document.getElementById('positionPickerModal').classList.remove('show');
+    renderAll();
+  }
+}
+
+document.getElementById('pickerClearBtn').addEventListener('click', async () => {
+  if(!activePickerSlot) return;
+
+  const team = state.teams.find(t=>t.id===activePickerSlot.teamId);
+  if(!team) return;
+
+  const formation = {...ensureFormation(team)};
+  delete formation[activePickerSlot.slotKey];
+
+  const ok = await updateTeam(team.id, { formation });
+
+  if(ok){
+    document.getElementById('positionPickerModal').classList.remove('show');
+    renderAll();
+  }
+});
+
+document.getElementById('cancelPicker').addEventListener('click', () => {
+  document.getElementById('positionPickerModal').classList.remove('show');
+});
+
+/* ========== COLLAPSIBLE SECTIONS ========== */
+document.querySelectorAll('.section-head').forEach(head=>{
+  head.addEventListener('click', ()=>{
+    const target = document.getElementById(head.dataset.target);
+    target.classList.toggle('collapsed');
+    head.querySelector('.chev').textContent = target.classList.contains('collapsed') ? '▸' : '▾';
+  });
+});
+
+/* ========== RENDER ALL ========== */
+function renderAll(){
+  renderTeamTabs();
+  renderSummary();
+  renderForm();
+  renderRoster();
+  renderFormation();
+  renderStats();
+  renderHistory();
+}
+
+/* ========== INIT ========== */
+(async function init(){
+  await loadState();
+  renderAll();
+})();
+</script>
+</body>
+</html>
