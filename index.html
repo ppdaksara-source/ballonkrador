@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Match Ledger — Supabase</title>
+<title>Match Ledger</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -77,7 +77,6 @@
     -webkit-tap-highlight-color:transparent;
   }
 
-  /* ===== Header ===== */
   .topbar{
     display:flex;
     align-items:center;
@@ -112,11 +111,8 @@
     color:var(--muted);
   }
 
-  .brand span{
-    color:var(--green);
-  }
+  .brand span{ color:var(--green); }
 
-  /* ===== Team tabs ===== */
   .team-tabs{
     display:flex;
     gap:8px;
@@ -179,7 +175,6 @@
     border:1px dashed rgba(47,107,63,.42);
   }
 
-  /* ===== Summary ===== */
   .summary{
     position:relative;
     overflow:hidden;
@@ -262,7 +257,6 @@
     letter-spacing:-.045em;
   }
 
-  /* ===== Sections ===== */
   .section{
     overflow:hidden;
     margin-bottom:14px;
@@ -300,15 +294,9 @@
     background:var(--surface-green);
   }
 
-  .section-body{
-    padding:18px;
-  }
+  .section-body{ padding:18px; }
+  .section-body.collapsed{ display:none; }
 
-  .section-body.collapsed{
-    display:none;
-  }
-
-  /* ===== Inputs ===== */
   .row{
     display:flex;
     gap:10px;
@@ -346,9 +334,7 @@
     background:#fff;
   }
 
-  input::placeholder{
-    color:#a9b3a2;
-  }
+  input::placeholder{ color:#a9b3a2; }
 
   .vs-row{
     display:flex;
@@ -448,7 +434,6 @@
     border-color:#d25757;
   }
 
-  /* ===== Event ===== */
   .event-block{
     margin-top:16px;
     padding-top:16px;
@@ -545,7 +530,6 @@
     transform:none;
   }
 
-  /* ===== Roster ===== */
   .roster-add{
     display:flex;
     gap:10px;
@@ -563,17 +547,13 @@
     background:linear-gradient(135deg, var(--green-2), var(--green));
   }
 
-  .roster-list,
-  .lineup-list,
-  .bench-list{
+  .roster-list{
     display:flex;
     flex-wrap:wrap;
     gap:8px;
   }
 
-  .roster-chip,
-  .lineup-chip,
-  .bench-chip{
+  .roster-chip{
     display:flex;
     align-items:center;
     gap:8px;
@@ -601,29 +581,79 @@
   }
 
   .empty-roster,
-  .empty-state,
-  .formation-empty{
+  .empty-state{
     color:var(--muted-2);
     font-size:13px;
     padding:20px 0;
     text-align:center;
   }
 
-  .lineup-chip{
-    cursor:pointer;
-    color:var(--muted-2);
+  .lineup-list{
+    display:block;
   }
 
-  .lineup-chip.selected{
+  .lineup-player-row{
+    width:100%;
+    display:grid;
+    grid-template-columns:42px 1fr 110px;
+    gap:8px;
+    align-items:center;
+    padding:9px;
+    margin-bottom:8px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:#fff;
+  }
+
+  .lineup-player-row.selected{
+    border-color:rgba(47,107,63,.35);
+    background:var(--surface-green);
+  }
+
+  .lineup-toggle{
+    width:34px;
+    height:34px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--green);
+    font-weight:950;
+    cursor:pointer;
+  }
+
+  .lineup-player-row.selected .lineup-toggle{
     color:#fff;
     border-color:var(--green);
     background:linear-gradient(135deg, var(--green-2), var(--green));
   }
 
-  .lineup-chip.lineup-all{
-    border-style:dashed;
-    color:var(--green);
+  .lineup-player-name{
+    font-weight:900;
+    color:var(--text);
+  }
+
+  .lineup-position-select{
+    min-height:36px;
+    padding:6px 9px;
+    border-radius:12px;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .lineup-position-select:disabled{
+    opacity:.45;
+  }
+
+  .lineup-select-all-btn{
+    width:100%;
+    margin-top:4px;
+    min-height:40px;
+    border-radius:14px;
+    border:1px dashed rgba(47,107,63,.38);
     background:var(--surface-green);
+    color:var(--green);
+    font-weight:900;
+    cursor:pointer;
   }
 
   .lineup-hint{
@@ -632,7 +662,17 @@
     color:var(--muted-2);
   }
 
-  /* ===== Stats ===== */
+  .scoring-note{
+    margin-top:8px;
+    padding:10px 12px;
+    border-radius:15px;
+    background:#fff;
+    border:1px solid var(--line);
+    color:var(--muted);
+    font-size:11px;
+    line-height:1.55;
+  }
+
   .table-scroll{
     overflow-x:auto;
     border-radius:20px;
@@ -644,7 +684,7 @@
     width:100%;
     border-collapse:collapse;
     font-size:13px;
-    min-width:620px;
+    min-width:760px;
     background:#fff;
   }
 
@@ -665,9 +705,7 @@
     border-bottom:1px solid var(--line);
   }
 
-  .stat-table th.sorted{
-    color:var(--green);
-  }
+  .stat-table th.sorted{ color:var(--green); }
 
   .stat-table td{
     padding:13px 10px;
@@ -676,20 +714,21 @@
     white-space:nowrap;
   }
 
-  .stat-table tr:last-child td{
-    border-bottom:none;
-  }
+  .stat-table tr:last-child td{ border-bottom:none; }
 
   .stat-table td.name{
     color:var(--green);
     font-weight:950;
   }
 
-  .stat-table tr:hover td{
-    background:#fbfdf9;
+  .stat-table td.pts{
+    color:var(--gold);
+    font-weight:950;
+    font-size:15px;
   }
 
-  /* ===== Match History ===== */
+  .stat-table tr:hover td{ background:#fbfdf9; }
+
   .match-item{
     margin-bottom:10px;
     padding:15px;
@@ -699,9 +738,7 @@
     box-shadow:0 8px 18px rgba(36,55,34,.04);
   }
 
-  .match-item:last-child{
-    margin-bottom:0;
-  }
+  .match-item:last-child{ margin-bottom:0; }
 
   .match-head{
     display:flex;
@@ -743,7 +780,8 @@
     border:1px solid var(--line);
   }
 
-  .match-events{
+  .match-events,
+  .match-lineup{
     margin-top:10px;
     padding:10px;
     border-radius:15px;
@@ -753,13 +791,26 @@
     border:1px solid var(--line);
   }
 
-  .match-events div{
-    margin-bottom:4px;
+  .match-lineup{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
   }
 
-  .match-events div:last-child{
-    margin-bottom:0;
+  .lineup-tag{
+    display:inline-flex;
+    gap:4px;
+    padding:4px 8px;
+    border-radius:999px;
+    background:#fff;
+    border:1px solid var(--line);
+    color:var(--muted);
+    font-size:11px;
+    font-weight:850;
   }
+
+  .match-events div{ margin-bottom:4px; }
+  .match-events div:last-child{ margin-bottom:0; }
 
   .match-delete{
     margin-top:10px;
@@ -773,7 +824,6 @@
     font-weight:900;
   }
 
-  /* ===== Toast & Modal ===== */
   .toast{
     position:fixed;
     bottom:22px;
@@ -810,9 +860,7 @@
     backdrop-filter:blur(8px);
   }
 
-  .modal-overlay.show{
-    display:flex;
-  }
+  .modal-overlay.show{ display:flex; }
 
   .modal-box{
     width:100%;
@@ -870,9 +918,7 @@
     box-shadow:0 0 0 1px rgba(24,32,22,.13);
   }
 
-  .color-swatch.selected{
-    border-color:var(--text);
-  }
+  .color-swatch.selected{ border-color:var(--text); }
 
   footer{
     margin-top:32px;
@@ -884,9 +930,7 @@
   }
 
   @media (max-width:720px){
-    .wrap{
-      padding-top:12px;
-    }
+    .wrap{ padding-top:12px; }
 
     .topbar{
       padding:17px;
@@ -906,13 +950,8 @@
       grid-column:span 2;
     }
 
-    .section{
-      border-radius:24px;
-    }
-
-    .section-body{
-      padding:14px;
-    }
+    .section{ border-radius:24px; }
+    .section-body{ padding:14px; }
 
     .row,
     .vs-row{
@@ -949,6 +988,16 @@
 
     .match-head{
       align-items:flex-start;
+    }
+
+    .lineup-player-row{
+      grid-template-columns:40px 1fr 94px;
+    }
+
+    .lineup-position-select{
+      font-size:11px;
+      padding-left:7px;
+      padding-right:7px;
     }
   }
 </style>
@@ -1015,7 +1064,6 @@
     </div>
   </div>
 </div>
-</div>
 
 <script>
 /*
@@ -1031,6 +1079,33 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const ACTIVE_TEAM_KEY = 'match_ledger_active_team_id_v1';
 
 const TEAM_COLORS = ['#c9a14a','#9e3b3b','#3a6ea5','#4a7a4a','#7a4a8a','#888888','#1a1a1a','#d9d9d9'];
+
+const POSITION_LABELS = {
+  GK: 'GK',
+  DEF: 'DEF',
+  MID: 'MID',
+  ATT: 'ATT'
+};
+
+function getGoalPointByPosition(pos){
+  if(pos === 'GK' || pos === 'DEF') return 6;
+  if(pos === 'MID') return 4;
+  return 3;
+}
+
+function getCleanSheetPointByPosition(pos){
+  if(pos === 'GK' || pos === 'DEF') return 5;
+  if(pos === 'MID') return 2;
+  return 1;
+}
+
+function getLineupName(item){
+  return typeof item === 'string' ? item : item.name;
+}
+
+function getLineupPos(item){
+  return typeof item === 'string' ? 'ATT' : (item.pos || 'ATT');
+}
 
 let state = {
   teams: [],
@@ -1187,6 +1262,7 @@ function renderTeamTabs(){
       state.activeTeamId = el.dataset.team;
       saveActiveTeamId();
       formLineup = [];
+      formLineupPositions = {};
       formEvents = [];
       formResult = 'win';
       renderAll();
@@ -1312,6 +1388,7 @@ function renderSummary(){
 /* ========== FORM ========== */
 let formEvents = [];
 let formLineup = [];
+let formLineupPositions = {};
 let formResult = 'win';
 
 function renderForm(){
@@ -1325,6 +1402,9 @@ function renderForm(){
 
   if(formLineup.length === 0 && team.roster.length > 0){
     formLineup = [...team.roster];
+    team.roster.forEach(p=>{
+      if(!formLineupPositions[p]) formLineupPositions[p] = 'ATT';
+    });
   }
 
   body.innerHTML = `
@@ -1371,9 +1451,9 @@ function renderForm(){
     </div>
 
     <div class="event-block">
-      <h3>ผู้ลงเล่นแมตช์นี้</h3>
+      <h3>ผู้ลงเล่น + ตำแหน่งในแมตช์นี้</h3>
       <div class="lineup-list" id="lineupList"></div>
-      <div class="lineup-hint">เลือกทุกคนที่ลงเล่น ใช้คำนวณ AP / W-D-L / Clean Sheet ให้แต่ละคน</div>
+      <div class="lineup-hint">เลือกตำแหน่งของผู้เล่นในนัดนี้ เพื่อคิดคะแนน Fantasy ให้ถูกต้อง</div>
     </div>
 
     <div class="event-block">
@@ -1397,8 +1477,9 @@ function renderForm(){
   });
 
   document.getElementById('addEventBtn').addEventListener('click', ()=>{
+    const firstPlayer = formLineup[0] || team.roster[0] || '';
     formEvents.push({
-      player: team.roster[0] || '',
+      player: firstPlayer,
       minute:'',
       type:'goal',
       assistPlayer:''
@@ -1422,20 +1503,56 @@ function renderLineupList(){
     return;
   }
 
-  wrap.innerHTML = team.roster.map(p=>`
-    <div class="lineup-chip ${formLineup.includes(p)?'selected':''}" data-player="${p}">${p}</div>
-  `).join('') + `<div class="lineup-chip lineup-all" id="lineupSelectAll">เลือกทั้งหมด</div>`;
+  wrap.innerHTML = `
+    <div style="width:100%; display:flex; flex-direction:column; gap:0;">
+      ${team.roster.map(p=>{
+        const selected = formLineup.includes(p);
+        const pos = formLineupPositions[p] || 'ATT';
 
-  wrap.querySelectorAll('.lineup-chip[data-player]').forEach(chip=>{
-    chip.addEventListener('click', ()=>{
-      const p = chip.dataset.player;
+        return `
+          <div class="lineup-player-row ${selected ? 'selected' : ''}" data-player="${p}">
+            <button type="button" class="lineup-toggle" data-toggle-player="${p}">
+              ${selected ? '✓' : '+'}
+            </button>
+
+            <div class="lineup-player-name">${p}</div>
+
+            <select class="lineup-position-select" data-pos-player="${p}" ${selected ? '' : 'disabled'}>
+              <option value="GK" ${pos==='GK'?'selected':''}>GK</option>
+              <option value="DEF" ${pos==='DEF'?'selected':''}>DEF</option>
+              <option value="MID" ${pos==='MID'?'selected':''}>MID</option>
+              <option value="ATT" ${pos==='ATT'?'selected':''}>ATT</option>
+            </select>
+          </div>
+        `;
+      }).join('')}
+
+      <button type="button" class="lineup-select-all-btn" id="lineupSelectAll">
+        ${formLineup.length === team.roster.length ? 'ล้างผู้เล่นทั้งหมด' : 'เลือกผู้เล่นทั้งหมด'}
+      </button>
+    </div>
+  `;
+
+  wrap.querySelectorAll('[data-toggle-player]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const p = btn.dataset.togglePlayer;
+
       if(formLineup.includes(p)){
         formLineup = formLineup.filter(x=>x!==p);
       }else{
         formLineup.push(p);
+        if(!formLineupPositions[p]) formLineupPositions[p] = 'ATT';
       }
+
       renderLineupList();
       renderEventRows();
+    });
+  });
+
+  wrap.querySelectorAll('[data-pos-player]').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      const p = sel.dataset.posPlayer;
+      formLineupPositions[p] = sel.value;
     });
   });
 
@@ -1446,7 +1563,11 @@ function renderLineupList(){
         formLineup = [];
       }else{
         formLineup = [...team.roster];
+        team.roster.forEach(p=>{
+          if(!formLineupPositions[p]) formLineupPositions[p] = 'ATT';
+        });
       }
+
       renderLineupList();
       renderEventRows();
     });
@@ -1484,6 +1605,7 @@ function renderEventRows(){
         <label>เหตุการณ์</label>
         <select class="ev-type-select">
           <option value="goal" ${ev.type==='goal'?'selected':''}>⚽ ยิงประตู</option>
+          <option value="save" ${ev.type==='save'?'selected':''}>🧤 GK Save</option>
           <option value="yellow" ${ev.type==='yellow'?'selected':''}>🟨 ใบเหลือง</option>
           <option value="red" ${ev.type==='red'?'selected':''}>🟥 ใบแดง</option>
         </select>
@@ -1553,10 +1675,16 @@ async function saveMatch(){
   saveBtn.textContent = 'กำลังบันทึก...';
 
   const lineupSet = new Set(formLineup);
+
   formEvents.forEach(ev=>{
     if(ev.player) lineupSet.add(ev.player);
     if(ev.assistPlayer) lineupSet.add(ev.assistPlayer);
   });
+
+  const lineupWithPositions = Array.from(lineupSet).map(playerName => ({
+    name: playerName,
+    pos: formLineupPositions[playerName] || 'ATT'
+  }));
 
   const homeTeam = document.getElementById('homeTeamInput').value.trim() || team.name;
   const awayTeam = document.getElementById('awayTeamInput').value.trim() || 'ทีมเยือน';
@@ -1575,7 +1703,7 @@ async function saveMatch(){
     match_date: date,
     league,
     result: formResult,
-    lineup: Array.from(lineupSet),
+    lineup: lineupWithPositions,
     events: formEvents.filter(e=>e.player).map(e=>({...e}))
   };
 
@@ -1593,6 +1721,7 @@ async function saveMatch(){
 
   formEvents = [];
   formLineup = [];
+  formLineupPositions = {};
   formResult = 'win';
 
   await loadState();
@@ -1663,6 +1792,7 @@ function renderRoster(){
 
       if(ok){
         formLineup = formLineup.filter(p => p !== name);
+        delete formLineupPositions[name];
         renderAll();
         showToast('ลบผู้เล่นแล้ว');
       }
@@ -1671,57 +1801,125 @@ function renderRoster(){
 }
 
 /* ========== STATS TABLE ========== */
-let sortKey = 'wpct';
-let sortDir = -1;
+let sortKey = 'pts';
+let sortDir = 'desc';
 
 function computePlayerStats(team){
   const matches = state.matches.filter(m=>m.teamId===team.id);
   const stats = {};
 
   team.roster.forEach(p=>{
-    stats[p] = {name:p, ap:0, w:0, d:0, l:0, g:0, a:0, cs:0};
+    stats[p] = {
+      name:p,
+      ap:0,
+      w:0,
+      d:0,
+      l:0,
+      g:0,
+      a:0,
+      cs:0,
+      sv:0,
+      pts:0
+    };
   });
 
   matches.forEach(m=>{
-    let playersInMatch = (m.lineup && m.lineup.length) ? new Set(m.lineup) : new Set();
+    const lineupItems = Array.isArray(m.lineup) ? m.lineup : [];
+
+    let playersInMatch = lineupItems.length
+      ? new Map(lineupItems.map(item => [getLineupName(item), getLineupPos(item)]))
+      : new Map();
 
     if(playersInMatch.size === 0){
       m.events.forEach(ev=>{
-        if(ev.player) playersInMatch.add(ev.player);
-        if(ev.assistPlayer) playersInMatch.add(ev.assistPlayer);
+        if(ev.player) playersInMatch.set(ev.player, 'ATT');
+        if(ev.assistPlayer) playersInMatch.set(ev.assistPlayer, 'ATT');
       });
     }
 
-    playersInMatch.forEach(p=>{
-      if(!stats[p]){
-        stats[p] = {name:p, ap:0, w:0, d:0, l:0, g:0, a:0, cs:0};
+    playersInMatch.forEach((pos, playerName)=>{
+      if(!stats[playerName]){
+        stats[playerName] = {
+          name:playerName,
+          ap:0,
+          w:0,
+          d:0,
+          l:0,
+          g:0,
+          a:0,
+          cs:0,
+          sv:0,
+          pts:0
+        };
       }
-      stats[p].ap++;
-      if(m.result==='win') stats[p].w++;
-      else if(m.result==='draw') stats[p].d++;
-      else stats[p].l++;
-      if(m.awayScore===0) stats[p].cs++;
+
+      stats[playerName].ap++;
+
+      if(m.result === 'win') stats[playerName].w++;
+      else if(m.result === 'draw') stats[playerName].d++;
+      else stats[playerName].l++;
+
+      if(m.awayScore === 0){
+        stats[playerName].cs++;
+        stats[playerName].pts += getCleanSheetPointByPosition(pos);
+      }
     });
 
     m.events.forEach(ev=>{
+      const playerPos = playersInMatch.get(ev.player) || 'ATT';
+
       if(ev.player && !stats[ev.player]){
-        stats[ev.player] = {name:ev.player, ap:0, w:0, d:0, l:0, g:0, a:0, cs:0};
-      }
-      if(ev.assistPlayer && !stats[ev.assistPlayer]){
-        stats[ev.assistPlayer] = {name:ev.assistPlayer, ap:0, w:0, d:0, l:0, g:0, a:0, cs:0};
+        stats[ev.player] = {
+          name:ev.player,
+          ap:0,
+          w:0,
+          d:0,
+          l:0,
+          g:0,
+          a:0,
+          cs:0,
+          sv:0,
+          pts:0
+        };
       }
 
-      if(ev.type === 'goal'){
-        if(ev.player) stats[ev.player].g++;
-        if(ev.assistPlayer) stats[ev.assistPlayer].a++;
+      if(ev.assistPlayer && !stats[ev.assistPlayer]){
+        stats[ev.assistPlayer] = {
+          name:ev.assistPlayer,
+          ap:0,
+          w:0,
+          d:0,
+          l:0,
+          g:0,
+          a:0,
+          cs:0,
+          sv:0,
+          pts:0
+        };
+      }
+
+      if(ev.type === 'goal' && ev.player){
+        stats[ev.player].g++;
+        stats[ev.player].pts += getGoalPointByPosition(playerPos);
+
+        if(ev.assistPlayer){
+          stats[ev.assistPlayer].a++;
+          stats[ev.assistPlayer].pts += 3;
+        }
+      }
+
+      if(ev.type === 'save' && ev.player){
+        stats[ev.player].sv++;
       }
     });
   });
 
-  return Object.values(stats).map(s=>({
-    ...s,
-    wpct: s.ap ? (s.w/s.ap*100) : 0
-  }));
+  Object.values(stats).forEach(s=>{
+    s.pts += Math.floor(s.sv / 3) * 2;
+    s.wpct = s.ap ? (s.w / s.ap * 100) : 0;
+  });
+
+  return Object.values(stats);
 }
 
 function renderStats(){
@@ -1742,9 +1940,18 @@ function renderStats(){
 
   rows.sort((a,b)=>{
     if(sortKey === 'name'){
-      return sortDir * String(a.name).localeCompare(String(b.name), 'th');
+      const result = String(a.name).localeCompare(String(b.name), 'th');
+      return sortDir === 'asc' ? result : -result;
     }
-    return sortDir * ((b[sortKey] || 0) - (a[sortKey] || 0));
+
+    const av = Number(a[sortKey] || 0);
+    const bv = Number(b[sortKey] || 0);
+
+    if(bv === av){
+      return (b.pts || 0) - (a.pts || 0) || String(a.name).localeCompare(String(b.name), 'th');
+    }
+
+    return sortDir === 'desc' ? (bv - av) : (av - bv);
   });
 
   const cols = [
@@ -1756,17 +1963,23 @@ function renderStats(){
     {key:'wpct', label:'W%'},
     {key:'g', label:'G'},
     {key:'a', label:'A'},
-    {key:'cs', label:'CS'}
+    {key:'cs', label:'CS'},
+    {key:'sv', label:'SV'},
+    {key:'pts', label:'PTS'}
   ];
 
   body.innerHTML = `
+    <div class="scoring-note">
+      ยิงประตู: GK/DEF 6 · MID 4 · ATT 3 — แอสซิสต์ 3 ทุกตำแหน่ง — Clean Sheet: GK/DEF 5 · MID 2 · ATT 1 — GK Save ครบ 3 ครั้ง = +2
+    </div>
+    <br>
     <div class="table-scroll">
       <table class="stat-table">
         <thead>
           <tr>
             ${cols.map(c=>`
               <th data-sort="${c.key}" class="${sortKey===c.key?'sorted':''}">
-                ${c.label}${sortKey===c.key ? (sortDir===1?' ▲':' ▼') : ''}
+                ${c.label}${sortKey===c.key ? (sortDir==='desc'?' ▼':' ▲') : ''}
               </th>
             `).join('')}
           </tr>
@@ -1783,6 +1996,8 @@ function renderStats(){
               <td>${r.g}</td>
               <td>${r.a}</td>
               <td>${r.cs}</td>
+              <td>${r.sv}</td>
+              <td class="pts">${r.pts}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -1794,10 +2009,10 @@ function renderStats(){
     th.addEventListener('click', ()=>{
       const key = th.dataset.sort;
       if(sortKey === key){
-        sortDir *= -1;
+        sortDir = sortDir === 'desc' ? 'asc' : 'desc';
       }else{
         sortKey = key;
-        sortDir = -1;
+        sortDir = key === 'name' ? 'asc' : 'desc';
       }
       renderStats();
     });
@@ -1837,13 +2052,24 @@ function renderHistory(){
         <span>ลงเล่น ${m.lineup ? m.lineup.length : '—'} คน</span>
       </div>
 
+      ${m.lineup && m.lineup.length ? `
+        <div class="match-lineup">
+          ${m.lineup.map(item=>{
+            const name = getLineupName(item);
+            const pos = getLineupPos(item);
+            return `<span class="lineup-tag">👤 ${name} · ${POSITION_LABELS[pos] || pos}</span>`;
+          }).join('')}
+        </div>
+      ` : ''}
+
       ${m.events.length ? `
         <div class="match-events">
           ${m.events.map(ev=>{
-            const icon = ev.type==='goal' ? '⚽' : ev.type==='yellow' ? '🟨' : '🟥';
+            const icon = ev.type==='goal' ? '⚽' : ev.type==='save' ? '🧤' : ev.type==='yellow' ? '🟨' : '🟥';
+            const label = ev.type==='save' ? 'GK Save' : '';
             const minute = ev.minute ? `${ev.minute}'` : '';
             const assist = ev.assistPlayer ? ` (แอสซิสต์: ${ev.assistPlayer})` : '';
-            return `<div>${icon} ${minute} ${ev.player}${assist}</div>`;
+            return `<div>${icon} ${minute} ${ev.player} ${label}${assist}</div>`;
           }).join('')}
         </div>
       ` : ''}
