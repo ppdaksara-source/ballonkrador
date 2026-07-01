@@ -77,6 +77,31 @@
     -webkit-tap-highlight-color:transparent;
   }
 
+
+  .view-only-badge{
+    flex-shrink:0;
+    padding:9px 13px;
+    border-radius:999px;
+    color:var(--green);
+    background:var(--surface-green);
+    border:1px solid rgba(47,107,63,.18);
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.12em;
+  }
+
+  .stats-only-note{
+    margin-bottom:14px;
+    padding:12px 14px;
+    border-radius:18px;
+    color:var(--muted);
+    background:#fff;
+    border:1px solid var(--line);
+    box-shadow:0 8px 18px rgba(36,55,34,.035);
+    font-size:12px;
+    line-height:1.55;
+  }
+
   .topbar{
     display:flex;
     align-items:center;
@@ -920,6 +945,59 @@
 
   .color-swatch.selected{ border-color:var(--text); }
 
+
+  .stats-layout{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  .stats-card-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin:0 0 10px;
+    color:var(--text);
+    font-size:13px;
+    font-weight:950;
+    letter-spacing:-.01em;
+  }
+
+  .stats-card-title span{
+    color:var(--muted);
+    font-size:11px;
+    font-weight:850;
+  }
+
+  .rank-badge{
+    display:inline-grid;
+    place-items:center;
+    min-width:30px;
+    height:26px;
+    padding:0 8px;
+    border-radius:999px;
+    color:#fff;
+    background:linear-gradient(135deg, var(--green-2), var(--green));
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .stat-table td.muted-cell{
+    color:var(--muted);
+    font-weight:800;
+  }
+
+  .stat-table td.negative{
+    color:var(--red);
+    font-weight:950;
+  }
+
+  .stat-table td.positive{
+    color:var(--green);
+    font-weight:950;
+  }
+
   footer{
     margin-top:32px;
     text-align:center;
@@ -932,7 +1010,32 @@
   @media (max-width:720px){
     .wrap{ padding-top:12px; }
 
-    .topbar{
+  
+  .view-only-badge{
+    flex-shrink:0;
+    padding:9px 13px;
+    border-radius:999px;
+    color:var(--green);
+    background:var(--surface-green);
+    border:1px solid rgba(47,107,63,.18);
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.12em;
+  }
+
+  .stats-only-note{
+    margin-bottom:14px;
+    padding:12px 14px;
+    border-radius:18px;
+    color:var(--muted);
+    background:#fff;
+    border:1px solid var(--line);
+    box-shadow:0 8px 18px rgba(36,55,34,.035);
+    font-size:12px;
+    line-height:1.55;
+  }
+
+  .topbar{
       padding:17px;
       border-radius:24px;
     }
@@ -1007,27 +1110,15 @@
 <div class="wrap">
 
   <div class="topbar">
-    <div class="brand">MATCH <span>LEDGER</span></div>
+    <div class="brand">MATCH <span>LEDGER</span></div><div class="view-only-badge">STATS ONLY</div>
   </div>
 
   <div class="team-tabs" id="teamTabs"></div>
 
   <div class="summary" id="summaryBlock"></div>
 
-  <div class="section">
-    <div class="section-head" data-target="formBody">
-      <h2>เพิ่มแมตช์ใหม่</h2>
-      <span class="chev">▾</span>
-    </div>
-    <div class="section-body" id="formBody"></div>
-  </div>
-
-  <div class="section">
-    <div class="section-head" data-target="rosterBody">
-      <h2>รายชื่อผู้เล่นในทีม</h2>
-      <span class="chev">▾</span>
-    </div>
-    <div class="section-body" id="rosterBody"></div>
+  <div class="stats-only-note">
+    หน้านี้เป็นโหมดดูสถิติเท่านั้น ข้อมูลยังดึงจาก Supabase เหมือนเดิม แต่ปิดส่วนเพิ่มแมตช์ / เพิ่มผู้เล่นออกจากหน้าเว็บแล้ว
   </div>
 
   <div class="section">
@@ -1261,10 +1352,6 @@ function renderTeamTabs(){
     el.addEventListener('click', ()=>{
       state.activeTeamId = el.dataset.team;
       saveActiveTeamId();
-      formLineup = [];
-      formLineupPositions = {};
-      formEvents = [];
-      formResult = 'win';
       renderAll();
     });
   });
@@ -1385,442 +1472,52 @@ function renderSummary(){
   });
 }
 
-/* ========== FORM ========== */
-let formEvents = [];
-let formLineup = [];
-let formLineupPositions = {};
-let formResult = 'win';
+/* ========== FORM REMOVED: STATS ONLY VIEW ========== */
 
-function renderForm(){
-  const team = getActiveTeam();
-  const body = document.getElementById('formBody');
-
-  if(!team){
-    body.innerHTML = '<div class="empty-state">สร้างทีมก่อนเพื่อเริ่มบันทึกแมตช์</div>';
-    return;
-  }
-
-  if(formLineup.length === 0 && team.roster.length > 0){
-    formLineup = [...team.roster];
-    team.roster.forEach(p=>{
-      if(!formLineupPositions[p]) formLineupPositions[p] = 'ATT';
-    });
-  }
-
-  body.innerHTML = `
-    <div class="vs-row">
-      <div>
-        <label>ทีมเจ้าบ้าน</label>
-        <input type="text" id="homeTeamInput" value="${team.name}">
-      </div>
-      <div class="vs">VS</div>
-      <div>
-        <label>ทีมเยือน</label>
-        <input type="text" id="awayTeamInput" placeholder="ทีมเยือน">
-      </div>
-    </div>
-
-    <div class="score-row">
-      <div>
-        <label style="text-align:center">เจ้าบ้าน</label>
-        <input type="number" min="0" class="score-box" id="homeScoreInput" value="0">
-      </div>
-      <div class="score-colon">:</div>
-      <div>
-        <label style="text-align:center">เยือน</label>
-        <input type="number" min="0" class="score-box" id="awayScoreInput" value="0">
-      </div>
-    </div>
-
-    <div class="row">
-      <div>
-        <label>วันที่</label>
-        <input type="date" id="matchDateInput">
-      </div>
-      <div>
-        <label>ลีก / รายการ</label>
-        <input type="text" id="leagueInput" placeholder="เช่น แข่งเตะเช้าวันเสาร์" value="Cruizero League">
-      </div>
-    </div>
-
-    <label>ผลการแข่งขัน (ของทีมนี้)</label>
-    <div class="result-pill-row" id="resultPillRow">
-      <div class="result-pill win ${formResult==='win'?'active':''}" data-result="win">✅ ชนะ</div>
-      <div class="result-pill draw ${formResult==='draw'?'active':''}" data-result="draw">➖ เสมอ</div>
-      <div class="result-pill loss ${formResult==='loss'?'active':''}" data-result="loss">❌ แพ้</div>
-    </div>
-
-    <div class="event-block">
-      <h3>ผู้ลงเล่น + ตำแหน่งในแมตช์นี้</h3>
-      <div class="lineup-list" id="lineupList"></div>
-      <div class="lineup-hint">เลือกตำแหน่งของผู้เล่นในนัดนี้ เพื่อคิดคะแนน Fantasy ให้ถูกต้อง</div>
-    </div>
-
-    <div class="event-block">
-      <h3>บันทึกเหตุการณ์ผู้เล่น</h3>
-      <div id="eventRows"></div>
-      <button class="add-event-btn" id="addEventBtn">+ เพิ่มเหตุการณ์</button>
-    </div>
-
-    <button class="save-btn" id="saveMatchBtn">+ บันทึกแมตช์</button>
-  `;
-
-  const dateInput = document.getElementById('matchDateInput');
-  dateInput.value = new Date().toISOString().slice(0,10);
-
-  document.querySelectorAll('.result-pill').forEach(el=>{
-    el.addEventListener('click', ()=>{
-      formResult = el.dataset.result;
-      renderForm();
-      renderEventRows();
-    });
-  });
-
-  document.getElementById('addEventBtn').addEventListener('click', ()=>{
-    const firstPlayer = formLineup[0] || team.roster[0] || '';
-    formEvents.push({
-      player: firstPlayer,
-      minute:'',
-      type:'goal',
-      assistPlayer:''
-    });
-    renderEventRows();
-  });
-
-  document.getElementById('saveMatchBtn').addEventListener('click', saveMatch);
-
-  renderLineupList();
-  renderEventRows();
-}
-
-function renderLineupList(){
-  const team = getActiveTeam();
-  const wrap = document.getElementById('lineupList');
-  if(!wrap) return;
-
-  if(team.roster.length === 0){
-    wrap.innerHTML = '<div class="empty-roster">เพิ่มผู้เล่นในทีมก่อน เพื่อเลือกผู้ลงเล่น</div>';
-    return;
-  }
-
-  wrap.innerHTML = `
-    <div style="width:100%; display:flex; flex-direction:column; gap:0;">
-      ${team.roster.map(p=>{
-        const selected = formLineup.includes(p);
-        const pos = formLineupPositions[p] || 'ATT';
-
-        return `
-          <div class="lineup-player-row ${selected ? 'selected' : ''}" data-player="${p}">
-            <button type="button" class="lineup-toggle" data-toggle-player="${p}">
-              ${selected ? '✓' : '+'}
-            </button>
-
-            <div class="lineup-player-name">${p}</div>
-
-            <select class="lineup-position-select" data-pos-player="${p}" ${selected ? '' : 'disabled'}>
-              <option value="GK" ${pos==='GK'?'selected':''}>GK</option>
-              <option value="DEF" ${pos==='DEF'?'selected':''}>DEF</option>
-              <option value="MID" ${pos==='MID'?'selected':''}>MID</option>
-              <option value="ATT" ${pos==='ATT'?'selected':''}>ATT</option>
-            </select>
-          </div>
-        `;
-      }).join('')}
-
-      <button type="button" class="lineup-select-all-btn" id="lineupSelectAll">
-        ${formLineup.length === team.roster.length ? 'ล้างผู้เล่นทั้งหมด' : 'เลือกผู้เล่นทั้งหมด'}
-      </button>
-    </div>
-  `;
-
-  wrap.querySelectorAll('[data-toggle-player]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const p = btn.dataset.togglePlayer;
-
-      if(formLineup.includes(p)){
-        formLineup = formLineup.filter(x=>x!==p);
-      }else{
-        formLineup.push(p);
-        if(!formLineupPositions[p]) formLineupPositions[p] = 'ATT';
-      }
-
-      renderLineupList();
-      renderEventRows();
-    });
-  });
-
-  wrap.querySelectorAll('[data-pos-player]').forEach(sel=>{
-    sel.addEventListener('change', ()=>{
-      const p = sel.dataset.posPlayer;
-      formLineupPositions[p] = sel.value;
-    });
-  });
-
-  const allBtn = document.getElementById('lineupSelectAll');
-  if(allBtn){
-    allBtn.addEventListener('click', ()=>{
-      if(formLineup.length === team.roster.length){
-        formLineup = [];
-      }else{
-        formLineup = [...team.roster];
-        team.roster.forEach(p=>{
-          if(!formLineupPositions[p]) formLineupPositions[p] = 'ATT';
-        });
-      }
-
-      renderLineupList();
-      renderEventRows();
-    });
-  }
-}
-
-function renderEventRows(){
-  const team = getActiveTeam();
-  const wrap = document.getElementById('eventRows');
-  if(!wrap) return;
-
-  const eligiblePlayers = formLineup.length ? formLineup : team.roster;
-  const playerOptions = eligiblePlayers.map(p=>`<option value="${p}">${p}</option>`).join('');
-  const assistOptions = () => {
-    return ['<option value="">— ไม่ระบุ —</option>']
-      .concat(eligiblePlayers.map(p=>`<option value="${p}">${p}</option>`))
-      .join('');
-  };
-
-  wrap.innerHTML = formEvents.map((ev, idx)=>`
-    <div class="event-row" data-idx="${idx}">
-      <div class="ev-player">
-        <label>ชื่อผู้เล่น</label>
-        <select class="ev-player-select">
-          ${playerOptions || '<option value="">— ไม่มีผู้เล่น —</option>'}
-        </select>
-      </div>
-
-      <div class="ev-min">
-        <label>นาที</label>
-        <input type="number" min="0" max="130" class="ev-minute-input" value="${ev.minute}" placeholder="นาที">
-      </div>
-
-      <div class="ev-type">
-        <label>เหตุการณ์</label>
-        <select class="ev-type-select">
-          <option value="goal" ${ev.type==='goal'?'selected':''}>⚽ ยิงประตู</option>
-          <option value="save" ${ev.type==='save'?'selected':''}>🧤 GK Save</option>
-          <option value="yellow" ${ev.type==='yellow'?'selected':''}>🟨 ใบเหลือง</option>
-          <option value="red" ${ev.type==='red'?'selected':''}>🟥 ใบแดง</option>
-        </select>
-      </div>
-
-      ${ev.type==='goal' ? `
-      <div class="ev-assist">
-        <label>ผู้แอสซิสต์</label>
-        <select class="ev-assist-select">${assistOptions()}</select>
-      </div>` : '<div class="ev-assist"></div>'}
-
-      <button class="ev-remove" data-remove="${idx}">×</button>
-    </div>
-  `).join('');
-
-  wrap.querySelectorAll('.event-row').forEach(row=>{
-    const idx = parseInt(row.dataset.idx, 10);
-    const ev = formEvents[idx];
-
-    const playerSelect = row.querySelector('.ev-player-select');
-    if(playerSelect){
-      playerSelect.value = ev.player || eligiblePlayers[0] || '';
-      if(!ev.player && playerSelect.value) ev.player = playerSelect.value;
-      playerSelect.addEventListener('change', e=>{
-        formEvents[idx].player = e.target.value;
-      });
-    }
-
-    row.querySelector('.ev-minute-input').addEventListener('input', e=>{
-      formEvents[idx].minute = e.target.value;
-    });
-
-    row.querySelector('.ev-type-select').addEventListener('change', e=>{
-      formEvents[idx].type = e.target.value;
-      if(e.target.value !== 'goal') formEvents[idx].assistPlayer = '';
-      renderEventRows();
-    });
-
-    const assistSel = row.querySelector('.ev-assist-select');
-    if(assistSel){
-      assistSel.value = ev.assistPlayer || '';
-      assistSel.addEventListener('change', e=>{
-        formEvents[idx].assistPlayer = e.target.value;
-      });
-    }
-  });
-
-  wrap.querySelectorAll('[data-remove]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      formEvents.splice(parseInt(btn.dataset.remove, 10), 1);
-      renderEventRows();
-    });
-  });
-}
-
-async function saveMatch(){
-  const team = getActiveTeam();
-  if(!team) return;
-
-  if(formLineup.length === 0){
-    showToast('เลือกผู้ลงเล่นอย่างน้อย 1 คนก่อนบันทึก');
-    return;
-  }
-
-  const saveBtn = document.getElementById('saveMatchBtn');
-  saveBtn.disabled = true;
-  saveBtn.textContent = 'กำลังบันทึก...';
-
-  const lineupSet = new Set(formLineup);
-
-  formEvents.forEach(ev=>{
-    if(ev.player) lineupSet.add(ev.player);
-    if(ev.assistPlayer) lineupSet.add(ev.assistPlayer);
-  });
-
-  const lineupWithPositions = Array.from(lineupSet).map(playerName => ({
-    name: playerName,
-    pos: formLineupPositions[playerName] || 'ATT'
-  }));
-
-  const homeTeam = document.getElementById('homeTeamInput').value.trim() || team.name;
-  const awayTeam = document.getElementById('awayTeamInput').value.trim() || 'ทีมเยือน';
-  const homeScore = parseInt(document.getElementById('homeScoreInput').value, 10) || 0;
-  const awayScore = parseInt(document.getElementById('awayScoreInput').value, 10) || 0;
-  const date = document.getElementById('matchDateInput').value || null;
-  const league = document.getElementById('leagueInput').value.trim();
-
-  const match = {
-    id: uid('match'),
-    team_id: team.id,
-    home_team: homeTeam,
-    away_team: awayTeam,
-    home_score: homeScore,
-    away_score: awayScore,
-    match_date: date,
-    league,
-    result: formResult,
-    lineup: lineupWithPositions,
-    events: formEvents.filter(e=>e.player).map(e=>({...e}))
-  };
-
-  const { error } = await supabaseClient
-    .from('matches')
-    .insert(match);
-
-  if(error){
-    console.error(error);
-    showToast('บันทึกแมตช์ไม่สำเร็จ');
-    saveBtn.disabled = false;
-    saveBtn.textContent = '+ บันทึกแมตช์';
-    return;
-  }
-
-  formEvents = [];
-  formLineup = [];
-  formLineupPositions = {};
-  formResult = 'win';
-
-  await loadState();
-  renderAll();
-  showToast('บันทึกแมตช์แล้ว ✅');
-}
-
-/* ========== ROSTER ========== */
-function renderRoster(){
-  const team = getActiveTeam();
-  const body = document.getElementById('rosterBody');
-
-  if(!team){
-    body.innerHTML = '<div class="empty-state">สร้างทีมก่อน</div>';
-    return;
-  }
-
-  body.innerHTML = `
-    <div class="roster-add">
-      <input type="text" id="newPlayerInput" placeholder="ชื่อผู้เล่นใหม่">
-      <button id="addPlayerBtn">+ เพิ่ม</button>
-    </div>
-    <div class="roster-list" id="rosterList">
-      ${team.roster.length ? team.roster.map(p=>`
-        <div class="roster-chip">${p} <button data-remove-player="${p}">×</button></div>
-      `).join('') : '<div class="empty-roster">ยังไม่มีผู้เล่นในทีมนี้</div>'}
-    </div>
-  `;
-
-  document.getElementById('addPlayerBtn').addEventListener('click', async ()=>{
-    const input = document.getElementById('newPlayerInput');
-    const name = input.value.trim();
-    if(!name) return;
-
-    if(team.roster.includes(name)){
-      showToast('มีชื่อนี้ในทีมแล้ว');
-      return;
-    }
-
-    const newRoster = [...team.roster, name];
-    const ok = await updateTeam(team.id, { roster: newRoster });
-
-    if(ok){
-      await loadState();
-      renderAll();
-      showToast('เพิ่ม ' + name + ' แล้ว');
-    }
-  });
-
-  body.querySelectorAll('[data-remove-player]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const name = btn.dataset.removePlayer;
-      if(!confirm(`ลบ ${name} ออกจากทีม? (สถิติแมตช์เก่ายังเก็บไว้)`)) return;
-
-      const newRoster = team.roster.filter(p=>p!==name);
-
-      const newFormation = {...(team.formation || {})};
-      Object.keys(newFormation).forEach(slot=>{
-        if(newFormation[slot] === name){
-          delete newFormation[slot];
-        }
-      });
-
-      const ok = await updateTeam(team.id, {
-        roster: newRoster,
-        formation: newFormation
-      });
-
-      if(ok){
-        formLineup = formLineup.filter(p => p !== name);
-        delete formLineupPositions[name];
-        renderAll();
-        showToast('ลบผู้เล่นแล้ว');
-      }
-    });
-  });
-}
+/* ========== ROSTER REMOVED: STATS ONLY VIEW ========== */
 
 /* ========== STATS TABLE ========== */
 let sortKey = 'pts';
 let sortDir = 'desc';
+let detailSortKey = 'csPts';
+let detailSortDir = 'desc';
+
+function makeEmptyPlayerStats(playerName){
+  return {
+    name: playerName,
+    ap: 0,
+    w: 0,
+    d: 0,
+    l: 0,
+    g: 0,
+    a: 0,
+    gc: 0,
+    cs: 0,
+    sv: 0,
+    og: 0,
+
+    goalPts: 0,
+    assistPts: 0,
+    csPts: 0,
+    saveBonus: 0,
+    ogPts: 0,
+    pts: 0,
+
+    wpct: 0,
+    gpm: 0,
+    apm: 0,
+    gcpm: 0,
+    ppm: 0,
+    csr: 0
+  };
+}
 
 function computePlayerStats(team){
   const matches = state.matches.filter(m=>m.teamId===team.id);
   const stats = {};
 
   team.roster.forEach(p=>{
-    stats[p] = {
-      name:p,
-      ap:0,
-      w:0,
-      d:0,
-      l:0,
-      g:0,
-      a:0,
-      cs:0,
-      sv:0,
-      pts:0
-    };
+    stats[p] = makeEmptyPlayerStats(p);
   });
 
   matches.forEach(m=>{
@@ -1839,18 +1536,7 @@ function computePlayerStats(team){
 
     playersInMatch.forEach((pos, playerName)=>{
       if(!stats[playerName]){
-        stats[playerName] = {
-          name:playerName,
-          ap:0,
-          w:0,
-          d:0,
-          l:0,
-          g:0,
-          a:0,
-          cs:0,
-          sv:0,
-          pts:0
-        };
+        stats[playerName] = makeEmptyPlayerStats(playerName);
       }
 
       stats[playerName].ap++;
@@ -1860,8 +1546,10 @@ function computePlayerStats(team){
       else stats[playerName].l++;
 
       if(m.awayScore === 0){
+        const csPoint = getCleanSheetPointByPosition(pos);
         stats[playerName].cs++;
-        stats[playerName].pts += getCleanSheetPointByPosition(pos);
+        stats[playerName].csPts += csPoint;
+        stats[playerName].pts += csPoint;
       }
     });
 
@@ -1869,41 +1557,22 @@ function computePlayerStats(team){
       const playerPos = playersInMatch.get(ev.player) || 'ATT';
 
       if(ev.player && !stats[ev.player]){
-        stats[ev.player] = {
-          name:ev.player,
-          ap:0,
-          w:0,
-          d:0,
-          l:0,
-          g:0,
-          a:0,
-          cs:0,
-          sv:0,
-          pts:0
-        };
+        stats[ev.player] = makeEmptyPlayerStats(ev.player);
       }
 
       if(ev.assistPlayer && !stats[ev.assistPlayer]){
-        stats[ev.assistPlayer] = {
-          name:ev.assistPlayer,
-          ap:0,
-          w:0,
-          d:0,
-          l:0,
-          g:0,
-          a:0,
-          cs:0,
-          sv:0,
-          pts:0
-        };
+        stats[ev.assistPlayer] = makeEmptyPlayerStats(ev.assistPlayer);
       }
 
       if(ev.type === 'goal' && ev.player){
+        const goalPoint = getGoalPointByPosition(playerPos);
         stats[ev.player].g++;
-        stats[ev.player].pts += getGoalPointByPosition(playerPos);
+        stats[ev.player].goalPts += goalPoint;
+        stats[ev.player].pts += goalPoint;
 
         if(ev.assistPlayer){
           stats[ev.assistPlayer].a++;
+          stats[ev.assistPlayer].assistPts += 3;
           stats[ev.assistPlayer].pts += 3;
         }
       }
@@ -1911,15 +1580,47 @@ function computePlayerStats(team){
       if(ev.type === 'save' && ev.player){
         stats[ev.player].sv++;
       }
+
+      if(ev.type === 'og' && ev.player){
+        stats[ev.player].og++;
+        stats[ev.player].ogPts -= 2;
+        stats[ev.player].pts -= 2;
+      }
     });
   });
 
   Object.values(stats).forEach(s=>{
-    s.pts += Math.floor(s.sv / 3) * 2;
+    s.saveBonus = Math.floor(s.sv / 3) * 2;
+    s.pts += s.saveBonus;
+
+    s.gc = s.g + s.a;
     s.wpct = s.ap ? (s.w / s.ap * 100) : 0;
+    s.gpm = s.ap ? (s.g / s.ap) : 0;
+    s.apm = s.ap ? (s.a / s.ap) : 0;
+    s.gcpm = s.ap ? (s.gc / s.ap) : 0;
+    s.ppm = s.ap ? (s.pts / s.ap) : 0;
+    s.csr = s.ap ? (s.cs / s.ap * 100) : 0;
   });
 
   return Object.values(stats);
+}
+
+function sortRows(rows, key, dir){
+  return rows.sort((a,b)=>{
+    if(key === 'name'){
+      const result = String(a.name).localeCompare(String(b.name), 'th');
+      return dir === 'asc' ? result : -result;
+    }
+
+    const av = Number(a[key] || 0);
+    const bv = Number(b[key] || 0);
+
+    if(bv === av){
+      return (b.pts || 0) - (a.pts || 0) || String(a.name).localeCompare(String(b.name), 'th');
+    }
+
+    return dir === 'desc' ? (bv - av) : (av - bv);
+  });
 }
 
 function renderStats(){
@@ -1931,88 +1632,151 @@ function renderStats(){
     return;
   }
 
-  const rows = computePlayerStats(team);
+  const allRows = computePlayerStats(team);
 
-  if(rows.length === 0){
+  if(allRows.length === 0){
     body.innerHTML = '<div class="empty-state">ยังไม่มีข้อมูลผู้เล่น เพิ่มผู้เล่นและบันทึกแมตช์เพื่อให้ระบบคำนวณสถิติให้อัตโนมัติ</div>';
     return;
   }
 
-  rows.sort((a,b)=>{
-    if(sortKey === 'name'){
-      const result = String(a.name).localeCompare(String(b.name), 'th');
-      return sortDir === 'asc' ? result : -result;
-    }
+  const rankingRows = sortRows([...allRows], sortKey, sortDir);
+  const detailRows = sortRows([...allRows], detailSortKey, detailSortDir);
 
-    const av = Number(a[sortKey] || 0);
-    const bv = Number(b[sortKey] || 0);
-
-    if(bv === av){
-      return (b.pts || 0) - (a.pts || 0) || String(a.name).localeCompare(String(b.name), 'th');
-    }
-
-    return sortDir === 'desc' ? (bv - av) : (av - bv);
-  });
-
-  const cols = [
+  const rankingCols = [
+    {key:'rank', label:'#'},
     {key:'name', label:'ผู้เล่น'},
     {key:'ap', label:'AP'},
-    {key:'w', label:'W'},
-    {key:'d', label:'D'},
-    {key:'l', label:'L'},
-    {key:'wpct', label:'W%'},
     {key:'g', label:'G'},
     {key:'a', label:'A'},
+    {key:'gc', label:'GC'},
+    {key:'gpm', label:'G/AP'},
+    {key:'apm', label:'A/AP'},
+    {key:'gcpm', label:'GC/AP'},
+    {key:'pts', label:'PTS'},
+    {key:'ppm', label:'PPM'}
+  ];
+
+  const detailCols = [
+    {key:'name', label:'ผู้เล่น'},
     {key:'cs', label:'CS'},
+    {key:'csr', label:'CS%'},
+    {key:'csPts', label:'CS PTS'},
     {key:'sv', label:'SV'},
-    {key:'pts', label:'PTS'}
+    {key:'saveBonus', label:'SV Bonus'},
+    {key:'og', label:'OG'},
+    {key:'ogPts', label:'OG PTS'},
+    {key:'goalPts', label:'Goal PTS'},
+    {key:'assistPts', label:'Assist PTS'}
   ];
 
   body.innerHTML = `
     <div class="scoring-note">
-      ยิงประตู: GK/DEF 6 · MID 4 · ATT 3 — แอสซิสต์ 3 ทุกตำแหน่ง — Clean Sheet: GK/DEF 5 · MID 2 · ATT 1 — GK Save ครบ 3 ครั้ง = +2
+      GC = G + A · G/AP = ประตูเฉลี่ยต่อเกม · A/AP = แอสซิสต์เฉลี่ยต่อเกม · GC/AP = มีส่วนร่วมกับประตูเฉลี่ยต่อเกม · PPM = คะแนนเฉลี่ยต่อเกม · CS% = อัตรา Clean Sheet
     </div>
     <br>
-    <div class="table-scroll">
-      <table class="stat-table">
-        <thead>
-          <tr>
-            ${cols.map(c=>`
-              <th data-sort="${c.key}" class="${sortKey===c.key?'sorted':''}">
-                ${c.label}${sortKey===c.key ? (sortDir==='desc'?' ▼':' ▲') : ''}
-              </th>
-            `).join('')}
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(r=>`
-            <tr>
-              <td class="name">${r.name}</td>
-              <td>${r.ap}</td>
-              <td>${r.w}</td>
-              <td>${r.d}</td>
-              <td>${r.l}</td>
-              <td>${r.wpct.toFixed(1)}%</td>
-              <td>${r.g}</td>
-              <td>${r.a}</td>
-              <td>${r.cs}</td>
-              <td>${r.sv}</td>
-              <td class="pts">${r.pts}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
+
+    <div class="stats-layout">
+      <div>
+        <div class="stats-card-title">
+          Ranking หลัก
+          <span>เรียงเริ่มต้นตาม PTS มากสุด</span>
+        </div>
+
+        <div class="table-scroll">
+          <table class="stat-table">
+            <thead>
+              <tr>
+                ${rankingCols.map(c=>`
+                  <th data-sort-main="${c.key}" class="${sortKey===c.key?'sorted':''}">
+                    ${c.label}${sortKey===c.key ? (sortDir==='desc'?' ▼':' ▲') : ''}
+                  </th>
+                `).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${rankingRows.map((r, idx)=>`
+                <tr>
+                  <td><span class="rank-badge">${idx + 1}</span></td>
+                  <td class="name">${r.name}</td>
+                  <td>${r.ap}</td>
+                  <td>${r.g}</td>
+                  <td>${r.a}</td>
+                  <td class="positive">${r.gc}</td>
+                  <td class="muted-cell">${r.gpm.toFixed(2)}</td>
+                  <td class="muted-cell">${r.apm.toFixed(2)}</td>
+                  <td class="muted-cell">${r.gcpm.toFixed(2)}</td>
+                  <td class="pts">${r.pts}</td>
+                  <td class="positive">${r.ppm.toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <div class="stats-card-title">
+          Breakdown คะแนน
+          <span>แยก CS / Save / Own Goal</span>
+        </div>
+
+        <div class="table-scroll">
+          <table class="stat-table">
+            <thead>
+              <tr>
+                ${detailCols.map(c=>`
+                  <th data-sort-detail="${c.key}" class="${detailSortKey===c.key?'sorted':''}">
+                    ${c.label}${detailSortKey===c.key ? (detailSortDir==='desc'?' ▼':' ▲') : ''}
+                  </th>
+                `).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${detailRows.map(r=>`
+                <tr>
+                  <td class="name">${r.name}</td>
+                  <td>${r.cs}</td>
+                  <td class="muted-cell">${r.csr.toFixed(1)}%</td>
+                  <td class="positive">${r.csPts}</td>
+                  <td>${r.sv}</td>
+                  <td class="positive">${r.saveBonus}</td>
+                  <td>${r.og}</td>
+                  <td class="${r.ogPts < 0 ? 'negative' : 'muted-cell'}">${r.ogPts}</td>
+                  <td class="positive">${r.goalPts}</td>
+                  <td class="positive">${r.assistPts}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   `;
 
-  body.querySelectorAll('th[data-sort]').forEach(th=>{
+  body.querySelectorAll('th[data-sort-main]').forEach(th=>{
     th.addEventListener('click', ()=>{
-      const key = th.dataset.sort;
+      const key = th.dataset.sortMain;
+      if(key === 'rank') return;
+
       if(sortKey === key){
         sortDir = sortDir === 'desc' ? 'asc' : 'desc';
       }else{
         sortKey = key;
         sortDir = key === 'name' ? 'asc' : 'desc';
+      }
+      renderStats();
+    });
+  });
+
+  body.querySelectorAll('th[data-sort-detail]').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.sortDetail;
+
+      if(detailSortKey === key){
+        detailSortDir = detailSortDir === 'desc' ? 'asc' : 'desc';
+      }else{
+        detailSortKey = key;
+        detailSortDir = key === 'name' ? 'asc' : 'desc';
       }
       renderStats();
     });
@@ -2065,8 +1829,15 @@ function renderHistory(){
       ${m.events.length ? `
         <div class="match-events">
           ${m.events.map(ev=>{
-            const icon = ev.type==='goal' ? '⚽' : ev.type==='save' ? '🧤' : ev.type==='yellow' ? '🟨' : '🟥';
-            const label = ev.type==='save' ? 'GK Save' : '';
+            const icon =
+              ev.type==='goal' ? '⚽' :
+              ev.type==='save' ? '🧤' :
+              ev.type==='og' ? '🥅' :
+              ev.type==='yellow' ? '🟨' : '🟥';
+
+            const label =
+              ev.type==='save' ? 'GK Save' :
+              ev.type==='og' ? 'Own Goal (-2)' : '';
             const minute = ev.minute ? `${ev.minute}'` : '';
             const assist = ev.assistPlayer ? ` (แอสซิสต์: ${ev.assistPlayer})` : '';
             return `<div>${icon} ${minute} ${ev.player} ${label}${assist}</div>`;
@@ -2113,8 +1884,6 @@ document.querySelectorAll('.section-head').forEach(head=>{
 function renderAll(){
   renderTeamTabs();
   renderSummary();
-  renderForm();
-  renderRoster();
   renderStats();
   renderHistory();
 }
