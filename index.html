@@ -1577,6 +1577,16 @@ function computePlayerStats(team){
         }
       }
 
+      if(ev.type === 'team_og' && ev.assistPlayer){
+  if(!stats[ev.assistPlayer]){
+    stats[ev.assistPlayer] = makeEmptyPlayerStats(ev.assistPlayer);
+  }
+
+  stats[ev.assistPlayer].a++;
+  stats[ev.assistPlayer].assistPts += 3;
+  stats[ev.assistPlayer].pts += 3;
+}
+
       if(ev.type === 'save' && ev.player){
         stats[ev.player].sv++;
       }
