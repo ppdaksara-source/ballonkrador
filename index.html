@@ -709,7 +709,7 @@
     width:100%;
     border-collapse:collapse;
     font-size:13px;
-    min-width:760px;
+    min-width:980px;
     background:#fff;
   }
 
@@ -1646,6 +1646,10 @@ function renderStats(){
     {key:'rank', label:'#'},
     {key:'name', label:'ผู้เล่น'},
     {key:'ap', label:'AP'},
+    {key:'w', label:'W'},
+    {key:'d', label:'D'},
+    {key:'l', label:'L'},
+    {key:'wpct', label:'W%'},
     {key:'g', label:'G'},
     {key:'a', label:'A'},
     {key:'gc', label:'GC'},
@@ -1671,7 +1675,7 @@ function renderStats(){
 
   body.innerHTML = `
     <div class="scoring-note">
-      GC = G + A · G/AP = ประตูเฉลี่ยต่อเกม · A/AP = แอสซิสต์เฉลี่ยต่อเกม · GC/AP = มีส่วนร่วมกับประตูเฉลี่ยต่อเกม · PPM = คะแนนเฉลี่ยต่อเกม · CS% = อัตรา Clean Sheet
+      W/D/L = ชนะ/เสมอ/แพ้ · W% = Win Rate · GC = G + A · G/AP = ประตูเฉลี่ยต่อเกม · A/AP = แอสซิสต์เฉลี่ยต่อเกม · GC/AP = มีส่วนร่วมกับประตูเฉลี่ยต่อเกม · PPM = คะแนนเฉลี่ยต่อเกม · CS% = อัตรา Clean Sheet
     </div>
     <br>
 
@@ -1699,6 +1703,10 @@ function renderStats(){
                   <td><span class="rank-badge">${idx + 1}</span></td>
                   <td class="name">${r.name}</td>
                   <td>${r.ap}</td>
+                  <td>${r.w}</td>
+                  <td>${r.d}</td>
+                  <td>${r.l}</td>
+                  <td class="muted-cell">${r.wpct.toFixed(1)}%</td>
                   <td>${r.g}</td>
                   <td>${r.a}</td>
                   <td class="positive">${r.gc}</td>
